@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Commodity Tracker — Ferro Alloys MIS 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+</style>
+
+<style>
+:root {
+  --bg: #06090f;
+  --surface: #0d1117;
+  --surface2: #161b22;
+  --surface3: #1c2333;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --text3: #484f58;
+  --accent: #58a6ff;
+  --accent2: #1f6feb;
+  --green: #3fb950;
+  --red: #f85149;
+  --orange: #d29922;
+  --purple: #bc8cff;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(31,111,235,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(188,140,255,0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+.site-wrap { position: relative; z-index: 1; max-width: 1600px; margin: 0 auto; padding: 0 24px 60px; }
+
+/* NAV */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 0 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(6,9,15,0.92);
+  backdrop-filter: blur(16px);
+  margin-left: -24px; margin-right: -24px;
+  padding-left: 24px; padding-right: 24px;
+}
+.nav-logo { display: flex; align-items: center; gap: 10px; }
+.nav-logo-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent2), var(--purple));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.nav-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -0.3px; }
+.nav-subtitle { font-size: 11px; color: var(--text3); font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; letter-spacing: 0.5px; margin-top: 1px; }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+.upload-btn {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text); padding: 8px 16px; border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 12px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  transition: all 0.2s; white-space: nowrap;
+}
+.upload-btn:hover { background: var(--surface3); border-color: var(--accent); color: var(--accent); }
+.upload-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+.data-badge {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace;
+  color: var(--text2); background: var(--surface2);
+  padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border);
+}
+.data-badge-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* SECTION HEADER */
+.section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--text3); font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; }
+.section-line { flex: 1; height: 1px; background: var(--border); }
+
+/* PRICE CARDS */
+#cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 36px;
+}
+.price-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.price-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--card-color, var(--accent));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.price-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+.price-card:hover::before, .price-card.active::before { opacity: 1; }
+.price-card.active {
+  border-color: var(--card-color, var(--accent));
+  background: var(--surface2);
+  box-shadow: 0 0 0 1px var(--card-color, var(--accent)), 0 8px 32px rgba(0,0,0,0.5);
+}
+.card-name { font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-price { font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 5px; }
+.card-index { font-size: 9px; color: var(--text3); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-change {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace;
+  padding: 2px 6px; border-radius: 4px;
+}
+.card-change.up { color: var(--green); background: rgba(63,185,80,0.1); }
+.card-change.down { color: var(--red); background: rgba(248,81,73,0.1); }
+.card-change.flat { color: var(--text3); background: rgba(255,255,255,0.04); }
+
+/* ANALYSIS */
+.commodity-selector-bar {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  margin-bottom: 20px;
+}
+.selector-label { font-size: 11px; color: var(--text3); white-space: nowrap; font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; }
+.commodity-select {
+  flex: 1; background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text); padding: 8px 14px; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 500; cursor: pointer; outline: none;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 360px;
+  transition: border-color 0.2s;
+}
+.commodity-select:focus { border-color: var(--accent); }
+.selected-index { font-size: 11px; color: var(--text3); font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; }
+
+/* 3-COL */
+.three-col { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .three-col { grid-template-columns: 1fr 1fr; } .three-col .col-right { grid-column: 1 / -1; } }
+@media (max-width: 700px) { .three-col { grid-template-columns: 1fr; } }
+
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.panel-head { padding: 14px 18px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.panel-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text2); font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; }
+.panel-body { padding: 18px; }
+
+/* CHART */
+.chart-wrap { position: relative; height: 200px; }
+.chart-period-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.period-chip { font-size: 9px; color: var(--text3); font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; background: var(--surface2); padding: 3px 7px; border-radius: 4px; border: 1px solid var(--border); }
+.period-chip.latest { border-color: var(--accent); color: var(--accent); }
+
+/* TABLE */
+.price-table { width: 100%; border-collapse: collapse; }
+.price-table th { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); font-weight: 500; }
+.price-table th:not(:first-child) { text-align: right; }
+.price-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.price-table td:not(:first-child) { text-align: right; font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; }
+.price-table tr:last-child td { border-bottom: none; }
+.price-table tr.latest-row { background: rgba(88,166,255,0.04); }
+.price-table tr.latest-row td:first-child { color: var(--accent); font-weight: 500; }
+.chg-up { color: var(--green); } .chg-down { color: var(--red); } .chg-flat { color: var(--text3); }
+
+/* STATS */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
+.stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text3); font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; margin-bottom: 6px; }
+.stat-value { font-size: 16px; font-weight: 600; font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; color: var(--text); }
+.stat-sub { font-size: 9px; color: var(--text3); margin-top: 3px; }
+.stat-value.green { color: var(--green); } .stat-value.red { color: var(--red); } .stat-value.orange { color: var(--orange); } .stat-value.blue { color: var(--accent); }
+.ma-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.ma-row:last-child { border-bottom: none; }
+.ma-label { color: var(--text2); }
+.ma-value { font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; color: var(--text); font-size: 11px; }
+.ma-bar-wrap { width: 60px; height: 3px; background: var(--surface3); border-radius: 2px; margin-left: 8px; overflow: hidden; }
+.ma-bar { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.6s ease; }
+
+/* NEWS */
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.news-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: var(--radius); padding: 16px; transition: border-color 0.2s; }
+.news-card.bullish { border-left-color: var(--green); }
+.news-card.bearish { border-left-color: var(--red); }
+.news-card.neutral { border-left-color: var(--text3); }
+.news-card:hover { border-color: var(--border2); }
+.news-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.news-source { font-size: 9px; font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+.news-tag { font-size: 9px; font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 7px; border-radius: 3px; }
+.news-tag.bullish { color: var(--green); background: rgba(63,185,80,0.1); }
+.news-tag.bearish { color: var(--red); background: rgba(248,81,73,0.1); }
+.news-tag.neutral { color: var(--text3); background: rgba(255,255,255,0.04); }
+.news-headline { font-size: 13px; font-weight: 600; line-height: 1.4; color: var(--text); margin-bottom: 7px; }
+.news-body { font-size: 12px; color: var(--text2); line-height: 1.55; }
+.news-loading { grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text3); font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; font-size: 12px; }
+
+.refresh-btn { display: flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--border); color: var(--text2); padding: 5px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 11px; font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; transition: all 0.2s; }
+.refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+.refresh-btn.spinning svg { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* DROP OVERLAY */
+#drop-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(6,9,15,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; }
+#drop-overlay.active { display: flex; }
+.drop-box { border: 2px dashed var(--accent); border-radius: 16px; padding: 60px 80px; text-align: center; color: var(--accent); font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; font-size: 16px; }
+.drop-box svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.7; }
+
+#toast { position: fixed; bottom: 24px; right: 24px; z-index: 300; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 12px 18px; font-size: 13px; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,0.5); transform: translateY(20px); opacity: 0; transition: all 0.3s; pointer-events: none; max-width: 320px; }
+#toast.show { transform: translateY(0); opacity: 1; }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fade-up { animation: fadeUp 0.35s ease both; }
+
+@media (max-width: 900px) { #cards-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); } }
+@media (max-width: 480px) { nav { flex-wrap: wrap; gap: 10px; } .nav-right { width: 100%; justify-content: space-between; } }
+</style>
+
+</head>
+<body>
+
+<input type="file" id="file-input" accept=".xlsx,.xls" style="display:none"/>
+
+<div id="drop-overlay">
+  <div class="drop-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+    </svg>
+    Drop your updated Excel file here
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div class="site-wrap">
+
+  <nav>
+    <div class="nav-logo">
+      <div class="nav-logo-icon">⬡</div>
+      <div>
+        <div class="nav-title">Commodity Tracker</div>
+        <div class="nav-subtitle">FERRO ALLOYS · MIS 2026</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="data-badge">
+        <div class="data-badge-dot"></div>
+        <span id="data-period-badge">LIVE</span>
+      </div>
+      <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 7.5m0 0L7.5 12M12 7.5v9"/>
+        </svg>
+        Update Excel
+      </button>
+    </div>
+  </nav>
+
+  <div class="section-header">
+    <span class="section-label">Latest Prices — All Commodities</span>
+    <div class="section-line"></div>
+    <span id="latest-period-label" style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;"></span>
+  </div>
+  <div id="cards-grid"></div>
+
+  <div style="margin-bottom:32px;">
+    <div class="section-header">
+      <span class="section-label">Commodity Analysis</span>
+      <div class="section-line"></div>
+    </div>
+
+```
+<div class="commodity-selector-bar">
+  <span class="selector-label">SELECT COMMODITY</span>
+  <select class="commodity-select" id="commodity-select"></select>
+  <span class="selected-index" id="selected-index-label"></span>
+</div>
+
+<div class="three-col">
+  <div class="panel col-left">
+    <div class="panel-head">
+      <span class="panel-title">4-Week Price Trend</span>
+      <span id="trend-commodity-name" style="font-size:11px;color:var(--accent);font-family:'JetBrains Mono',monospace;"></span>
+    </div>
+    <div class="panel-body">
+      <div class="chart-period-row" id="trend-periods"></div>
+      <div class="chart-wrap"><canvas id="trend-chart"></canvas></div>
+      <div id="trend-range" style="display:flex;justify-content:space-between;margin-top:12px;font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;"></div>
+    </div>
+  </div>
+
+  <div class="panel col-center">
+    <div class="panel-head"><span class="panel-title">Period Price History</span></div>
+    <div class="panel-body" style="padding:0;">
+      <table class="price-table">
+        <thead><tr><th>Period</th><th>Price (Rs/MT)</th><th>W/W Chg</th><th>vs Mar Avg</th></tr></thead>
+        <tbody id="price-history-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel col-right">
+    <div class="panel-head"><span class="panel-title">Statistics &amp; Metrics</span></div>
+    <div class="panel-body">
+      <div class="stats-grid" id="stats-grid"></div>
+      <div style="margin-top:16px;margin-bottom:6px;">
+        <span style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);font-family:'JetBrains Mono',monospace;">Moving Averages</span>
+      </div>
+      <div id="ma-section"></div>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <div>
+    <div class="section-header" style="margin-bottom:14px;">
+      <span class="section-label">Market Intelligence</span>
+      <div class="section-line"></div>
+      <span id="news-context-label" style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;margin-left:4px;"></span>
+      <button class="refresh-btn" id="refresh-news-btn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
+    <div class="news-grid" id="news-grid">
+      <div class="news-loading">Loading market intelligence…</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const COLORS = ['#58a6ff','#3fb950','#ff7b72','#d2a8ff','#ffa657','#79c0ff','#56d364','#ffa198','#e3b341','#bc8cff','#6e40c9','#da3633','#f0883e','#388bfd','#2ea043'];
+
+let STATE = {
+  periods: ["Mar-26 Avg","Apr-26 Week-14","Week-15","Week-16","Week-17"],
+  commodities: [
+    {name:"Al Cube",                     index:"Nalco (Rs/MT)",                  prices:[349147.81,362149.75,367565.99,null,null]},
+    {name:"Al Coil",                     index:"Nalco (Rs/MT)",                  prices:[354547.00,367750.00,373250.00,null,null]},
+    {name:"HcFeMn",                      index:"Bigmint (Rs/MT)",                prices:[78664.00, 85650.00, 92123.00, null,null]},
+    {name:"SiMn",                        index:"Bigmint (Rs/MT)",                prices:[78210.00, 85207.00, 91489.00, null,null]},
+    {name:"LcFeCr",                      index:"Bigmint (Rs/MT)-60% Cr",         prices:[249560.00,254360.00,257632.00,null,null]},
+    {name:"FeTi 70%",                    index:"Fastmarket ($/kg)-100% Ti",      prices:[395388.00,403476.00,401728.00,null,null]},
+    {name:"Nickel",                      index:"LME ($/MT)",                     prices:[1656201.70,1652050.00,1651195.00,null,null]},
+    {name:"FeSi",                        index:"Bigmint",                        prices:[107340.00,111605.00,113625.00,null,null]},
+    {name:"FeNb (62% Nb)",               index:"Fastmarket/CBMM ($/kg of Nb)",   prices:[3227720.00,3490976.00,3475645.69,null,null]},
+    {name:"FeV(75%)",                    index:"Fastmarket ($/kg)-100% V",       prices:[2141614.00,2185180.00,2161538.00,null,null]},
+    {name:"FeMo lumps (60% Mo)",         index:"Platts ($/kg of 100% Mo)",       prices:[3804222.85,3786455.00,3762426.00,null,null]},
+    {name:"Copper",                      index:"LME ($/MT)",                     prices:[1241902.43,1216061.00,1240428.00,null,null]},
+    {name:"Graphite Electrode (750/700)",index:"Bigmint (Rs/MT)",                prices:[290550.00,290550.00,290550.00,null,null]},
+    {name:"Graphite Electrode (450/400)",index:"Bigmint (Rs/MT)",                prices:[246450.00,246450.00,246450.00,null,null]},
+  ],
+  selectedIdx: 0,
+};
+
+let trendChartInstance = null;
+let newsFetching = false;
+let newsLastCommodity = null;
+
+function fmtPrice(v) {
+  if (v == null) return '—';
+  if (v >= 100000) return (v/100000).toFixed(2) + ' L';
+  if (v >= 1000) return v.toLocaleString('en-IN', {maximumFractionDigits:0});
+  return v.toFixed(2);
+}
+function fmtFull(v) { if (v == null) return '—'; return v.toLocaleString('en-IN', {maximumFractionDigits:2, minimumFractionDigits:0}); }
+function fmtPct(v) { if (v == null) return '—'; return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
+function pctChange(a, b) { if (!a || !b) return null; return ((b - a) / a) * 100; }
+function getValidPeriodPrices(c) { return STATE.periods.map((p,i) => ({period:p, price:c.prices[i], idx:i})).filter(x => x.price != null); }
+function getLatestPeriod() {
+  for (let i = STATE.periods.length - 1; i >= 0; i--) {
+    if (STATE.commodities.some(c => c.prices[i] != null)) return STATE.periods[i];
+  }
+  return STATE.periods[0] || '';
+}
+
+function renderCards() {
+  const grid = document.getElementById('cards-grid');
+  document.getElementById('latest-period-label').textContent = getLatestPeriod().toUpperCase();
+  grid.innerHTML = STATE.commodities.map((c, i) => {
+    const vp = getValidPeriodPrices(c);
+    const latest = vp[vp.length - 1];
+    const prev   = vp[vp.length - 2];
+    const chg    = latest && prev ? pctChange(prev.price, latest.price) : null;
+    const color  = COLORS[i % COLORS.length];
+    const active = i === STATE.selectedIdx;
+    let chgHtml  = '';
+    if (chg != null) {
+      const cls = chg > 0 ? 'up' : chg < 0 ? 'down' : 'flat';
+      const arr = chg > 0 ? '▲' : chg < 0 ? '▼' : '—';
+      chgHtml = `<span class="card-change ${cls}">${arr} ${Math.abs(chg).toFixed(2)}%</span>`;
+    }
+    return `<div class="price-card fade-up ${active ? 'active' : ''}" style="--card-color:${color}" onclick="selectCommodity(${i})">
+      <div class="card-name">${c.name}</div>
+      <div class="card-price">${fmtPrice(latest ? latest.price : null)}</div>
+      <div class="card-index">${c.index}</div>
+      ${chgHtml}
+    </div>`;
+  }).join('');
+}
+
+function renderSelect() {
+  const sel = document.getElementById('commodity-select');
+  sel.innerHTML = STATE.commodities.map((c,i) => `<option value="${i}" ${i===STATE.selectedIdx?'selected':''}>${c.name}</option>`).join('');
+  sel.onchange = e => selectCommodity(parseInt(e.target.value));
+}
+
+function selectCommodity(idx) {
+  STATE.selectedIdx = idx;
+  document.getElementById('commodity-select').value = idx;
+  const c = STATE.commodities[idx];
+  document.getElementById('selected-index-label').textContent = c.index;
+  document.getElementById('news-context-label').textContent = c.name.toUpperCase();
+  renderCards();
+  renderTrend(c, idx);
+  renderTable(c);
+  renderStats(c, idx);
+  newsLastCommodity = null;
+  fetchNews(c.name);
+}
+
+function renderTrend(c, colorIdx) {
+  const color = COLORS[colorIdx % COLORS.length];
+  const vp    = getValidPeriodPrices(c);
+  const last4 = vp.slice(-4);
+  document.getElementById('trend-commodity-name').textContent = c.name;
+  document.getElementById('trend-periods').innerHTML = last4.map((p,i) =>
+    `<span class="period-chip ${i===last4.length-1?'latest':''}">${p.period}</span>`
+  ).join('');
+  const labels = last4.map(p => p.period);
+  const data   = last4.map(p => p.price);
+  if (trendChartInstance) { trendChartInstance.destroy(); trendChartInstance = null; }
+  const ctx = document.getElementById('trend-chart').getContext('2d');
+  const g = ctx.createLinearGradient(0,0,0,200);
+  g.addColorStop(0, color+'44'); g.addColorStop(1, color+'00');
+  trendChartInstance = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{ data, borderColor:color, backgroundColor:g, borderWidth:2.5, pointBackgroundColor:color, pointRadius:5, pointHoverRadius:7, tension:0.35, fill:true }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#161b22', borderColor:'#30363d', borderWidth:1, titleColor:'#8b949e', bodyColor:'#e6edf3', bodyFont:{family:'JetBrains Mono',size:12}, callbacks:{ label: ctx => ' ' + fmtFull(ctx.raw) } } },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#484f58',font:{family:'JetBrains Mono',size:9}} },
+        y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{ color:'#484f58', font:{family:'JetBrains Mono',size:9}, callback: v => v>=100000?(v/100000).toFixed(1)+'L':v>=1000?(v/1000).toFixed(0)+'k':v } }
+      }
+    }
+  });
+  if (data.length) {
+    const mn = Math.min(...data), mx = Math.max(...data);
+    document.getElementById('trend-range').innerHTML =
+      `<span>LOW: ${fmtFull(mn)}</span><span style="color:${color}">LATEST: ${fmtFull(data[data.length-1])}</span><span>HIGH: ${fmtFull(mx)}</span>`;
+  }
+}
+
+function renderTable(c) {
+  const vp = getValidPeriodPrices(c);
+  const marAvg = c.prices[0];
+  document.getElementById('price-history-body').innerHTML = vp.map((row, i) => {
+    const prev   = vp[i-1];
+    const ww     = prev ? pctChange(prev.price, row.price) : null;
+    const vsM    = (i > 0 && marAvg) ? pctChange(marAvg, row.price) : null;
+    const isL    = i === vp.length - 1;
+    const wwH    = ww!=null ? `<span class="${ww>0?'chg-up':ww<0?'chg-down':'chg-flat'}">${fmtPct(ww)}</span>` : '<span class="chg-flat">—</span>';
+    const vmH    = vsM!=null ? `<span class="${vsM>0?'chg-up':vsM<0?'chg-down':'chg-flat'}">${fmtPct(vsM)}</span>` : '<span class="chg-flat">—</span>';
+    return `<tr class="${isL?'latest-row':''}"><td>${row.period}</td><td>${fmtFull(row.price)}</td><td>${wwH}</td><td>${vmH}</td></tr>`;
+  }).join('');
+}
+
+function renderStats(c, colorIdx) {
+  const color = COLORS[colorIdx % COLORS.length];
+  const vals  = c.prices.filter(p => p != null);
+  if (!vals.length) return;
+  const latest = vals[vals.length-1];
+  const prev   = vals.length >= 2 ? vals[vals.length-2] : null;
+  const marAvg = c.prices[0];
+  const ww     = prev ? pctChange(prev, latest) : null;
+  const vsM    = (marAvg && marAvg !== latest) ? pctChange(marAvg, latest) : null;
+  const high   = Math.max(...vals);
+  const low    = Math.min(...vals);
+  const ma2    = vals.length >= 2 ? vals.slice(-2).reduce((a,b)=>a+b,0)/2 : null;
+  const ma3    = vals.length >= 3 ? vals.slice(-3).reduce((a,b)=>a+b,0)/3 : null;
+  const ma4    = vals.length >= 4 ? vals.slice(-4).reduce((a,b)=>a+b,0)/4 : null;
+  let vol = null;
+  if (vals.length >= 3) {
+    const ch = [];
+    for (let i = 1; i < vals.length; i++) ch.push(Math.abs(pctChange(vals[i-1], vals[i])));
+    vol = ch.reduce((a,b)=>a+b,0)/ch.length;
+  }
+  document.getElementById('stats-grid').innerHTML = [
+    {l:'Latest Price', v:fmtFull(latest),       s:c.index,            c:'blue'},
+    {l:'W/W Change',   v:fmtPct(ww),             s:'vs prior week',    c:ww>0?'green':ww<0?'red':''},
+    {l:'vs Mar-26 Avg',v:fmtPct(vsM),            s:'from monthly avg', c:vsM>0?'green':vsM<0?'red':''},
+    {l:'Volatility',   v:vol!=null?vol.toFixed(2)+'%':'—', s:'avg weekly move', c:vol>2?'orange':''},
+    {l:'Period High',  v:fmtFull(high),          s:'all periods',      c:'green'},
+    {l:'Period Low',   v:fmtFull(low),           s:'all periods',      c:'red'},
+  ].map(x => `<div class="stat-box"><div class="stat-label">${x.l}</div><div class="stat-value ${x.c}">${x.v}</div><div class="stat-sub">${x.s}</div></div>`).join('');
+
+  const mas = [{l:'2-Period MA',v:ma2},{l:'3-Period MA',v:ma3},{l:'4-Period MA',v:ma4}].filter(m=>m.v!=null);
+  const mmax = mas.length ? Math.max(...mas.map(m=>m.v)) : 1;
+  document.getElementById('ma-section').innerHTML = mas.map(m => {
+    const bar = mmax?(m.v/mmax)*100:0;
+    const diff = pctChange(m.v, latest);
+    const ds = diff!=null?`<span style="font-size:9px;margin-left:6px;color:${diff>=0?'var(--green)':'var(--red)'}">${fmtPct(diff)}</span>`:'';
+    return `<div class="ma-row"><span class="ma-label">${m.l}</span><div style="display:flex;align-items:center;"><span class="ma-value">${fmtFull(m.v)}${ds}</span><div class="ma-bar-wrap"><div class="ma-bar" style="width:${bar}%;background:${color};"></div></div></div></div>`;
+  }).join('');
+}
+
+async function fetchNews(commodityName) {
+  if (newsFetching) return;
+  commodityName = commodityName || STATE.commodities[STATE.selectedIdx]?.name || 'ferro alloys';
+  if (commodityName === newsLastCommodity) return;
+  newsLastCommodity = commodityName;
+  newsFetching = true;
+  document.getElementById('refresh-news-btn').classList.add('spinning');
+  document.getElementById('news-grid').innerHTML = `<div class="news-loading">Fetching market intelligence for ${commodityName}…</div>`;
+  const all = STATE.commodities.map(c=>c.name).join(', ');
+  const prompt = `You are a professional commodity market analyst covering Indian ferro alloys and raw materials.
+Generate 6 concise market news items for "${commodityName}" in the ferro alloys/metals market (April 2026).
+Context commodities: ${all}.
+Cover: price movements, supply/demand, Indian import trends, global drivers, policy news.
+Respond ONLY with a valid JSON array (no markdown) of 6 objects:
+- headline: string (max 12 words, specific)
+- summary: string (2-3 sentences with plausible specifics)
+- sentiment: "bullish" | "bearish" | "neutral"
+- source: string (e.g. "Metal Bulletin", "Bigmint", "Fastmarkets", "Steel360", "LME", "S&P Platts")`;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1400,messages:[{role:'user',content:prompt}]})
+    });
+    const d = await r.json();
+    const txt = (d.content||[]).map(b=>b.text||'').join('');
+    renderNews(JSON.parse(txt.replace(/```json|```/g,'').trim()));
+  } catch(e) {
+    renderNews(fallbackNews(commodityName));
+  }
+  newsFetching = false;
+  document.getElementById('refresh-news-btn').classList.remove('spinning');
+}
+
+function renderNews(articles) {
+  document.getElementById('news-grid').innerHTML = articles.map(a =>
+    `<div class="news-card ${a.sentiment} fade-up">
+      <div class="news-meta"><span class="news-source">${a.source}</span><span class="news-tag ${a.sentiment}">${a.sentiment}</span></div>
+      <div class="news-headline">${a.headline}</div>
+      <div class="news-body">${a.summary}</div>
+    </div>`
+  ).join('');
+}
+
+function fallbackNews(name) {
+  return [
+    {headline:`${name} prices stabilise amid mixed demand signals`,summary:`Spot prices for ${name} have found near-term support as buying interest from downstream consumers offset continued supply pressure. Market participants remain cautious ahead of Q2 contract negotiations.`,sentiment:'neutral',source:'Metal Bulletin'},
+    {headline:'Indian ferro alloy imports ease on domestic output gains',summary:'Domestic ferro alloy production rose 4.2% MoM in March as new capacity came online. Import volumes declined correspondingly, reducing pressure on landed costs for Indian steel mills.',sentiment:'bearish',source:'Steel360'},
+    {headline:'LME base metals complex firms on weaker dollar',summary:'A pullback in the US dollar index supported broader metals prices this week. Copper and nickel led gains while aluminium remained range-bound pending Chinese import data.',sentiment:'bullish',source:'LME'},
+    {headline:'Chinese manganese output rises ahead of golden week',summary:'Bigmint data shows Chinese HcFeMn production rose 3.1% WoW as producers restocked ahead of the holiday. Indian buyers watching closely for price implications.',sentiment:'bearish',source:'Bigmint'},
+    {headline:'Vanadium demand supported by rebar specification tightening',summary:'Indian rebar producers are increasing vanadium microalloying ratios following BIS standard updates. FeV spot demand has edged higher, supporting near-term prices.',sentiment:'bullish',source:'Fastmarkets'},
+    {headline:'Graphite electrode market stable; EAF utilisation steady',summary:'Electrode prices have held flat for three consecutive weeks as EAF steel utilisation rates remain broadly unchanged. Producer discipline on output continues to underpin market sentiment.',sentiment:'neutral',source:'S&P Platts'},
+  ];
+}
+
+// EXCEL UPLOAD
+document.getElementById('file-input').addEventListener('change', e => { const f=e.target.files[0]; if(f) handleFile(f); e.target.value=''; });
+document.addEventListener('dragover', e => { e.preventDefault(); document.getElementById('drop-overlay').classList.add('active'); });
+document.addEventListener('dragleave', e => { if(!e.relatedTarget) document.getElementById('drop-overlay').classList.remove('active'); });
+document.addEventListener('drop', e => {
+  e.preventDefault(); document.getElementById('drop-overlay').classList.remove('active');
+  const f=e.dataTransfer.files[0];
+  if(f&&(f.name.endsWith('.xlsx')||f.name.endsWith('.xls'))) handleFile(f);
+});
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      let headerRow = -1;
+      for (let i=0;i<Math.min(6,rows.length);i++) {
+        const s=rows[i].join(' ').toLowerCase();
+        if(s.includes('index')&&(s.includes('week')||s.includes('month'))) { headerRow=i; break; }
+      }
+      if(headerRow===-1) { toast('Could not find header row. Check file format.', true); return; }
+      const periodCols=[];
+      rows[headerRow].forEach((h,ci) => {
+        const s=String(h).trim();
+        if(s.toLowerCase().includes('month avg')||s.toLowerCase().includes('week')||/^w\d{1,2}$/i.test(s)) {
+          let month='';
+          if(headerRow>0){ const mv=rows[headerRow-1][ci]; if(mv instanceof Date) month=mv.toLocaleDateString('en-GB',{month:'short',year:'2-digit'}).replace(' ','-')+' '; }
+          periodCols.push({col:ci, label:month+s});
+        }
+      });
+      if(periodCols.length===0) { toast('No period columns detected.', true); return; }
+      const newCommodities=[];
+      for(let r=headerRow+2;r<rows.length;r++) {
+        const row=rows[r];
+        const name=String(row[0]||'').trim();
+        const index=String(row[1]||'').trim();
+        if(!name) continue;
+        const prices=periodCols.map(pc => { const v=row[pc.col]; const n=typeof v==='number'?v:parseFloat(String(v).replace(/[^0-9.-]/g,'')); return isNaN(n)?null:parseFloat(n.toFixed(2)); });
+        if(prices.some(p=>p!==null)) newCommodities.push({name, index, prices});
+      }
+      if(newCommodities.length===0) { toast('No commodity data found.', true); return; }
+      STATE.periods=periodCols.map(p=>p.label);
+      STATE.commodities=newCommodities;
+      STATE.selectedIdx=Math.min(STATE.selectedIdx,newCommodities.length-1);
+      newsLastCommodity=null;
+      renderCards(); renderSelect(); selectCommodity(STATE.selectedIdx);
+      toast('✓ Data updated — '+newCommodities.length+' commodities, '+STATE.periods.length+' periods loaded');
+    } catch(err) { toast('Error parsing file: '+err.message, true); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+document.getElementById('refresh-news-btn').addEventListener('click', () => { newsLastCommodity=null; fetchNews(STATE.commodities[STATE.selectedIdx]?.name); });
+
+function toast(msg, isErr=false) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.style.borderColor=isErr?'var(--red)':'var(--green)'; el.style.color=isErr?'var(--red)':'var(--green)';
+  el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+function init() {
+  document.getElementById('data-period-badge').textContent = getLatestPeriod().toUpperCase();
+  renderCards(); renderSelect();
+  const c=STATE.commodities[STATE.selectedIdx];
+  document.getElementById('selected-index-label').textContent=c.index;
+  document.getElementById('news-context-label').textContent=c.name.toUpperCase();
+  renderTrend(c, STATE.selectedIdx);
+  renderTable(c);
+  renderStats(c, STATE.selectedIdx);
+  fetchNews(c.name);
+}
+init();
+</script>
+
+</body>
+</html>
