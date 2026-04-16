@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Commodity Tracker - Ferro Alloys MIS 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: #f0f4f8; color: #1a2332; font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; font-size: 15px; line-height: 1.5; min-height: 100vh; }
+
+/* LOGIN SCREEN */
+#login-screen { position: fixed; inset: 0; z-index: 1000; background: linear-gradient(135deg, #1e3a5f 0%, #2d6a9f 50%, #1a5276 100%); display: flex; align-items: center; justify-content: center; }
+.login-box { background: #fff; border-radius: 16px; padding: 48px 40px; width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
+.login-logo { width: 64px; height: 64px; background: linear-gradient(135deg, #1a6fd4, #2980b9); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 20px; color: white; }
+.login-title { font-family: ‘Calibri’, sans-serif; font-size: 26px; font-weight: 700; color: #1a2332; margin-bottom: 6px; }
+.login-sub { font-size: 13px; color: #7f8c8d; margin-bottom: 32px; }
+.login-field { margin-bottom: 16px; text-align: left; }
+.login-field label { display: block; font-size: 12px; font-weight: 600; color: #5d6d7e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.login-field input { width: 100%; padding: 11px 14px; border: 1.5px solid #d5d8dc; border-radius: 8px; font-size: 15px; font-family: ‘Calibri’, sans-serif; outline: none; transition: border-color 0.2s; color: #1a2332; }
+.login-field input:focus { border-color: #2980b9; box-shadow: 0 0 0 3px rgba(41,128,185,0.1); }
+.login-btn { width: 100%; padding: 13px; background: linear-gradient(135deg, #1a6fd4, #2980b9); border: none; border-radius: 8px; color: #fff; font-size: 16px; font-weight: 700; font-family: ‘Calibri’, sans-serif; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+.login-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(41,128,185,0.4); }
+.login-error { color: #e74c3c; font-size: 13px; margin-top: 12px; display: none; }
+.login-roles { display: flex; gap: 10px; margin-bottom: 24px; }
+.role-chip { flex: 1; padding: 8px; border: 1.5px solid #d5d8dc; border-radius: 8px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; color: #7f8c8d; transition: all 0.2s; }
+.role-chip.active { border-color: #2980b9; background: rgba(41,128,185,0.08); color: #2980b9; }
+
+/* MAIN APP */
+#app { display: none; }
+.wrap { max-width: 1700px; margin: 0 auto; padding: 0 28px 80px; }
+
+/* NAV */
+nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: linear-gradient(135deg, #1e3a5f, #2d6a9f); position: sticky; top: 0; z-index: 200; margin-left: -28px; margin-right: -28px; box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; border: 1px solid rgba(255,255,255,0.3); }
+.logo-name { font-family: ‘Calibri’, sans-serif; font-weight: 700; font-size: 22px; color: #fff; letter-spacing: -0.3px; }
+.logo-sub { font-size: 11px; color: rgba(255,255,255,0.6); letter-spacing: 1px; margin-top: 1px; }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+.nav-badge { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-family: ‘Calibri’, sans-serif; color: #fff; }
+.nav-dot { width: 7px; height: 7px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 6px #2ecc71; animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+.nav-btn { display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: ‘Calibri’, sans-serif; transition: all 0.2s; }
+.nav-btn:hover { background: rgba(255,255,255,0.25); }
+.nav-btn.primary { background: #fff; color: #1a6fd4; border-color: #fff; }
+.nav-btn.primary:hover { background: #f0f4f8; }
+.nav-btn svg { width: 14px; height: 14px; }
+.role-badge { font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 600; }
+.role-badge.admin { background: rgba(231,76,60,0.2); color: #ff6b6b; border: 1px solid rgba(231,76,60,0.3); }
+.role-badge.viewer { background: rgba(46,204,113,0.2); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+
+/* SECTION */
+.sec-head { display: flex; align-items: center; gap: 12px; margin: 28px 0 16px; }
+.sec-title { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: #7f8c8d; font-family: ‘Calibri’, sans-serif; white-space: nowrap; font-weight: 600; }
+.sec-line { flex: 1; height: 1px; background: linear-gradient(90deg, #bdc3c7, transparent); }
+.sec-badge { font-size: 11px; color: #2980b9; font-family: ‘Calibri’, sans-serif; background: rgba(41,128,185,0.08); border: 1px solid rgba(41,128,185,0.2); padding: 3px 10px; border-radius: 10px; white-space: nowrap; font-weight: 600; }
+
+/* MARKET BAR */
+.mkt-bar { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
+.mkt-box { background: #fff; border: 1px solid #e8ecef; border-radius: 12px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.2s; border-left: 4px solid transparent; }
+.mkt-box:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+.mkt-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.mkt-lbl { font-size: 11px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; font-family: ‘Calibri’, sans-serif; margin-bottom: 4px; font-weight: 600; }
+.mkt-val { font-size: 24px; font-weight: 700; font-family: ‘Calibri’, sans-serif; }
+.mkt-sub { font-size: 12px; color: #95a5a6; margin-top: 2px; }
+
+/* TABS */
+.tabs-wrap { display: flex; gap: 6px; margin-bottom: 20px; background: #fff; border: 1px solid #e8ecef; padding: 6px; border-radius: 12px; overflow-x: auto; scrollbar-width: none; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.tabs-wrap::-webkit-scrollbar { display: none; }
+.tab-btn { display: flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: 8px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: 600; color: #7f8c8d; font-family: ‘Calibri’, sans-serif; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+.tab-btn:hover { color: #1a2332; background: #f0f4f8; }
+.tab-btn.active { background: linear-gradient(135deg, #1e3a5f, #2d6a9f); color: #fff; box-shadow: 0 4px 12px rgba(41,128,185,0.3); }
+.tab-count { font-size: 11px; background: rgba(255,255,255,0.2); padding: 2px 7px; border-radius: 8px; font-family: ‘Calibri’, sans-serif; }
+.tab-btn:not(.active) .tab-count { background: #e8ecef; color: #7f8c8d; }
+
+/* CARDS */
+#cards-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(190px,1fr)); gap: 12px; margin-bottom: 32px; }
+.pcard { background: #fff; border: 1px solid #e8ecef; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border-top: 3px solid transparent; }
+.pcard:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+.pcard.active { border-top-color: var(–cc); box-shadow: 0 0 0 2px var(–cc), 0 8px 24px rgba(0,0,0,0.12); }
+.pc-cat { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; font-family: ‘Calibri’, sans-serif; margin-bottom: 6px; font-weight: 700; }
+.pc-name { font-size: 13px; font-weight: 700; color: #2c3e50; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-price { font-family: ‘Calibri’, sans-serif; font-size: 22px; font-weight: 700; color: #1a2332; margin-bottom: 4px; }
+.pc-idx { font-size: 10px; color: #95a5a6; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
+.pchg { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-family: ‘Calibri’, sans-serif; padding: 3px 8px; border-radius: 5px; font-weight: 700; }
+.pchg.up { color: #27ae60; background: #eafaf1; border: 1px solid #a9dfbf; }
+.pchg.dn { color: #e74c3c; background: #fdedec; border: 1px solid #f5b7b1; }
+.pchg.fl { color: #95a5a6; background: #f8f9fa; border: 1px solid #e8ecef; }
+.pchg-ref { font-size: 9px; color: #95a5a6; font-family: ‘Calibri’, sans-serif; }
+.vs-avg-row { margin-top: 7px; padding-top: 7px; border-top: 1px solid #f0f4f8; font-size: 11px; font-family: ‘Calibri’, sans-serif; font-weight: 600; }
+
+/* SELECTOR BAR */
+.sel-bar { display: flex; align-items: center; gap: 16px; background: #fff; border: 1px solid #e8ecef; border-radius: 12px; padding: 14px 20px; margin-bottom: 18px; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.sel-lbl { font-size: 11px; color: #7f8c8d; font-family: ‘Calibri’, sans-serif; letter-spacing: 1px; white-space: nowrap; font-weight: 700; text-transform: uppercase; }
+.sel-select { flex: 1; min-width: 220px; max-width: 400px; background: #f8f9fa; border: 1.5px solid #d5d8dc; color: #1a2332; padding: 10px 14px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; outline: none; font-family: ‘Calibri’, sans-serif; transition: border-color 0.2s; }
+.sel-select:focus { border-color: #2980b9; }
+.sel-idx { font-size: 12px; color: #7f8c8d; font-family: ‘Calibri’, sans-serif; }
+.sel-pi { margin-left: auto; font-size: 11px; color: #95a5a6; font-family: ‘Calibri’, sans-serif; }
+
+/* 3-COL */
+.three { display: grid; grid-template-columns: 1.1fr 1.4fr 1.1fr; gap: 16px; align-items: start; }
+@media(max-width:1200px) { .three { grid-template-columns: 1fr 1fr; } .col-r { grid-column: 1/-1; } }
+@media(max-width:768px) { .three { grid-template-columns: 1fr; } }
+.panel { background: #fff; border: 1px solid #e8ecef; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.ph { padding: 14px 18px 12px; border-bottom: 1px solid #f0f4f8; display: flex; align-items: center; justify-content: space-between; background: #fafbfc; }
+.pt { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #7f8c8d; font-family: ‘Calibri’, sans-serif; font-weight: 700; }
+.pb { padding: 18px; }
+.chart-wrap { position: relative; height: 220px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip { font-size: 10px; color: #7f8c8d; font-family: ‘Calibri’, sans-serif; background: #f0f4f8; padding: 3px 9px; border-radius: 5px; border: 1px solid #e8ecef; font-weight: 600; }
+.chip.latest { border-color: #2980b9; color: #2980b9; background: rgba(41,128,185,0.08); }
+.chip.avg { border-color: #e67e22; color: #e67e22; background: rgba(230,126,34,0.08); }
+.range-row { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f4f8; }
+.ri { text-align: center; }
+.ri-lbl { font-size: 10px; color: #95a5a6; font-family: ‘Calibri’, sans-serif; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; font-weight: 600; }
+.ri-val { font-size: 14px; font-weight: 700; font-family: ‘Calibri’, sans-serif; }
+.ptable { width: 100%; border-collapse: collapse; }
+.ptable th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #7f8c8d; font-family: ‘Calibri’, sans-serif; padding: 10px 14px; text-align: left; border-bottom: 2px solid #e8ecef; font-weight: 700; background: #fafbfc; }
+.ptable th:not(:first-child) { text-align: right; }
+.ptable td { padding: 11px 14px; border-bottom: 1px solid #f0f4f8; font-size: 13px; font-family: ‘Calibri’, sans-serif; }
+.ptable td:not(:first-child) { text-align: right; font-family: ‘Calibri’, sans-serif; font-weight: 600; }
+.ptable tr:last-child td { border-bottom: none; }
+.ptable tr.lr { background: rgba(41,128,185,0.05); }
+.ptable tr.lr td:first-child { color: #2980b9; font-weight: 700; }
+.ptable tr.avgr { background: rgba(230,126,34,0.05); }
+.ptable tr.avgr td:first-child { color: #e67e22; font-weight: 600; }
+.ptable tr:hover td { background: #f8f9fa; }
+.cup { color: #27ae60; font-weight: 700; }
+.cdn { color: #e74c3c; font-weight: 700; }
+.cfl { color: #95a5a6; }
+.sgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sbox { background: #f8f9fa; border: 1px solid #e8ecef; border-radius: 8px; padding: 13px 14px; transition: all 0.2s; }
+.sbox:hover { background: #f0f4f8; }
+.slbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #7f8c8d; font-family: ‘Calibri’, sans-serif; margin-bottom: 6px; font-weight: 700; }
+.sval { font-size: 18px; font-weight: 700; font-family: ‘Calibri’, sans-serif; }
+.ssub { font-size: 10px; color: #95a5a6; margin-top: 3px; font-family: ‘Calibri’, sans-serif; }
+.sval.g { color: #27ae60; } .sval.r { color: #e74c3c; } .sval.o { color: #e67e22; } .sval.b { color: #2980b9; }
+.ma-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f4f8; }
+.ma-row:last-child { border-bottom: none; }
+.ma-lbl { font-size: 13px; color: #5d6d7e; font-family: ‘Calibri’, sans-serif; font-weight: 600; }
+.ma-right { display: flex; align-items: center; gap: 10px; }
+.ma-val { font-family: ‘Calibri’, sans-serif; font-size: 13px; font-weight: 700; }
+.ma-bar-w { width: 60px; height: 4px; background: #e8ecef; border-radius: 2px; overflow: hidden; }
+.ma-bar { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+.month-comp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #f0f4f8; }
+.mc-box { background: #f8f9fa; border-radius: 8px; padding: 12px 14px; border: 1px solid #e8ecef; }
+.mc-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #7f8c8d; font-family: ‘Calibri’, sans-serif; margin-bottom: 5px; font-weight: 700; }
+.mc-val { font-size: 16px; font-weight: 700; font-family: ‘Calibri’, sans-serif; }
+.mc-sub { font-size: 10px; color: #95a5a6; margin-top: 3px; font-family: ‘Calibri’, sans-serif; }
+
+/* NEWS */
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(340px,1fr)); gap: 14px; }
+.ncard { background: #fff; border: 1px solid #e8ecef; border-left: 4px solid #e8ecef; border-radius: 12px; padding: 16px; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+.ncard.bull { border-left-color: #27ae60; }
+.ncard.bear { border-left-color: #e74c3c; }
+.ncard.neut { border-left-color: #95a5a6; }
+.ncard:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+.nmeta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.nsrc { font-size: 10px; font-family: ‘Calibri’, sans-serif; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.ntag { font-size: 10px; font-family: ‘Calibri’, sans-serif; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+.ntag.bull { color: #27ae60; background: #eafaf1; }
+.ntag.bear { color: #e74c3c; background: #fdedec; }
+.ntag.neut { color: #7f8c8d; background: #f8f9fa; }
+.nhead { font-size: 14px; font-weight: 700; line-height: 1.4; color: #1a2332; margin-bottom: 7px; font-family: ‘Calibri’, sans-serif; }
+.nbody { font-size: 13px; color: #5d6d7e; line-height: 1.6; font-family: ‘Calibri’, sans-serif; }
+.nload { grid-column: 1/-1; text-align: center; padding: 50px; color: #95a5a6; font-family: ‘Calibri’, sans-serif; font-size: 14px; }
+.rbtn { display: flex; align-items: center; gap: 6px; background: none; border: 1px solid #d5d8dc; color: #7f8c8d; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: ‘Calibri’, sans-serif; transition: all 0.2s; font-weight: 600; }
+.rbtn:hover { border-color: #2980b9; color: #2980b9; }
+.rbtn.spin svg { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* TOAST */
+#toast { position: fixed; bottom: 24px; right: 24px; z-index: 500; background: #fff; border: 1px solid #e8ecef; border-radius: 8px; padding: 14px 20px; font-size: 13px; color: #1a2332; box-shadow: 0 8px 32px rgba(0,0,0,0.15); transform: translateY(20px); opacity: 0; transition: all 0.3s; pointer-events: none; max-width: 340px; font-family: ‘Calibri’, sans-serif; }
+#toast.show { transform: translateY(0); opacity: 1; }
+#drop-overlay { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(30,58,95,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; }
+#drop-overlay.active { display: flex; }
+.drop-box { border: 2px dashed #fff; border-radius: 20px; padding: 60px 80px; text-align: center; color: #fff; font-family: ‘Calibri’, sans-serif; font-size: 20px; font-weight: 600; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fu { animation: fadeUp 0.3s ease both; }
+@media(max-width:900px) { .mkt-bar { grid-template-columns: 1fr 1fr; } #cards-grid { grid-template-columns: repeat(auto-fill,minmax(150px,1fr)); } }
+@media(max-width:600px) { nav { flex-wrap: wrap; gap: 8px; } .mkt-bar { grid-template-columns: 1fr 1fr; } }
+</style>
+
+</head>
+<body>
+
+<!-- LOGIN -->
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">&#x2B21;</div>
+    <div class="login-title">Commodity Tracker</div>
+    <div class="login-sub">Ferro Alloys MIS 2026 &mdash; Please sign in</div>
+    <div class="login-roles">
+      <div class="role-chip active" id="chip-admin" onclick="selectRole('admin')">&#x1F512; Admin</div>
+      <div class="role-chip" id="chip-viewer" onclick="selectRole('viewer')">&#x1F441; Viewer</div>
+    </div>
+    <div class="login-field"><label>Username</label><input type="text" id="login-user" placeholder="Enter username"/></div>
+    <div class="login-field"><label>Password</label><input type="password" id="login-pass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="login-error">Invalid credentials. Please try again.</div>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept=".xlsx,.xls" style="display:none"/>
+<div id="drop-overlay"><div class="drop-box">&#x2B06; Drop your updated Excel file here</div></div>
+<div id="toast"></div>
+
+<!-- MAIN APP -->
+
+<div id="app">
+<div class="wrap">
+
+<nav>
+  <div class="logo">
+    <div class="logo-icon">&#x2B21;</div>
+    <div>
+      <div class="logo-name">Commodity Tracker</div>
+      <div class="logo-sub"></div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="nav-badge"><div class="nav-dot"></div><span id="live-text">WEEK-15</span></div>
+    <span class="role-badge" id="role-badge">VIEWER</span>
+    <button class="nav-btn primary" onclick="downloadPDF()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      Download PDF
+    </button>
+    <button class="nav-btn" id="upload-btn" style="display:none" onclick="document.getElementById('file-input').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 7.5m0 0L7.5 12M12 7.5v9"/></svg>
+      Update Excel
+    </button>
+    <button class="nav-btn" onclick="doLogout()">Sign Out</button>
+  </div>
+</nav>
+
+<div class="sec-head" style="margin-top:24px;"><span class="sec-title">Market Snapshot</span><div class="sec-line"></div><span class="sec-badge" id="snap-date">APR 2026 &middot; WEEK 15</span></div>
+<div class="mkt-bar" id="mkt-bar"></div>
+
+<div class="sec-head"><span class="sec-title">All Commodity Prices</span><div class="sec-line"></div><span id="pl-legend" style="font-size:11px;color:#7f8c8d;font-family:'Calibri',sans-serif;"></span></div>
+<div class="tabs-wrap" id="cat-tabs"></div>
+<div id="cards-grid"></div>
+
+<div class="sec-head"><span class="sec-title">Detailed Analysis</span><div class="sec-line"></div></div>
+<div class="sel-bar">
+  <span class="sel-lbl">Commodity</span>
+  <select class="sel-select" id="sel" onchange="selectCommodity(parseInt(this.value))"></select>
+  <span class="sel-idx" id="sel-idx"></span>
+  <span class="sel-pi" id="sel-pi"></span>
+</div>
+
+<div class="three">
+  <div class="panel">
+    <div class="ph"><span class="pt">Price Trend</span><span id="trend-name" style="font-size:12px;color:#2980b9;font-family:'Calibri',sans-serif;font-weight:700;"></span></div>
+    <div class="pb">
+      <div class="chips" id="trend-chips"></div>
+      <div class="chart-wrap"><canvas id="trend-chart"></canvas></div>
+      <div class="range-row">
+        <div class="ri"><div class="ri-lbl">Low</div><div class="ri-val" id="r-low" style="color:#e74c3c">-</div></div>
+        <div class="ri"><div class="ri-lbl">Month Avg</div><div class="ri-val" id="r-avg" style="color:#e67e22">-</div></div>
+        <div class="ri"><div class="ri-lbl">Latest</div><div class="ri-val" id="r-latest" style="color:#2980b9">-</div></div>
+        <div class="ri"><div class="ri-lbl">High</div><div class="ri-val" id="r-high" style="color:#27ae60">-</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="pt">Period Price History</span><span style="font-size:10px;color:#95a5a6;font-family:'Calibri',sans-serif;">Reference: vs Monthly Average</span></div>
+    <table class="ptable"><thead><tr><th>Period</th><th>Price (Rs/MT)</th><th>W/W Chg</th><th>vs Month Avg</th></tr></thead><tbody id="tbl-body"></tbody></table>
+  </div>
+
+  <div class="panel col-r">
+    <div class="ph"><span class="pt">Statistics &amp; Metrics</span></div>
+    <div class="pb">
+      <div class="sgrid" id="sgrid"></div>
+      <div style="margin:14px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#7f8c8d;font-family:'Calibri',sans-serif;font-weight:700;">Moving Averages</div>
+      <div id="ma-sec"></div>
+      <div class="month-comp" id="month-comp"></div>
+    </div>
+  </div>
+</div>
+
+<div class="sec-head" style="margin-top:32px;"><span class="sec-title">Market Intelligence</span><div class="sec-line"></div><span class="sec-badge" id="news-badge">ALL COMMODITIES</span><button class="rbtn" id="rbtn" onclick="fetchNews(true)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>Refresh</button></div>
+<div class="news-grid" id="news-grid"><div class="nload">Loading market intelligence...</div></div>
+
+</div>
+</div>
+
+<script>
+/* ---- AUTH ---- */
+var USERS = {
+  admin: {pass: 'admin123', role: 'admin'},
+  viewer: {pass: 'view123', role: 'viewer'},
+  muskan: {pass: 'mis2026', role: 'admin'}
+};
+var currentRole = 'viewer';
+var selectedLoginRole = 'admin';
+
+function selectRole(r) {
+  selectedLoginRole = r;
+  document.getElementById('chip-admin').className = 'role-chip' + (r === 'admin' ? ' active' : '');
+  document.getElementById('chip-viewer').className = 'role-chip' + (r === 'viewer' ? ' active' : '');
+}
+
+function doLogin() {
+  var user = document.getElementById('login-user').value.trim().toLowerCase();
+  var pass = document.getElementById('login-pass').value;
+  var err = document.getElementById('login-error');
+  if (USERS[user] && USERS[user].pass === pass) {
+    currentRole = USERS[user].role;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('role-badge').textContent = currentRole.toUpperCase();
+    document.getElementById('role-badge').className = 'role-badge ' + currentRole;
+    if (currentRole === 'admin') {
+      document.getElementById('upload-btn').style.display = 'flex';
+      document.addEventListener('dragover', function(e) { e.preventDefault(); document.getElementById('drop-overlay').classList.add('active'); });
+      document.addEventListener('dragleave', function(e) { if (!e.relatedTarget) document.getElementById('drop-overlay').classList.remove('active'); });
+      document.addEventListener('drop', function(e) { e.preventDefault(); document.getElementById('drop-overlay').classList.remove('active'); var f = e.dataTransfer.files[0]; if (f) handleFile(f); });
+    }
+    err.style.display = 'none';
+    init();
+  } else {
+    err.style.display = 'block';
+  }
+}
+
+function doLogout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+/* ---- DATA ---- */
+var CATS = {
+  'All': {label:'All', icon:'&#x2B21;', color:'#2980b9', list:null},
+  'Ferro Alloys': {label:'Ferro Alloys', icon:'&#x2699;', color:'#e74c3c', list:['HcFeMn','SiMn','LcFeCr','FeTi','FeSi','FeNb','FeV','FeMo']},
+  'Aluminium': {label:'Aluminium', icon:'&#x25C8;', color:'#2980b9', list:['Al Cube','Al Coil']},
+  'Base Metals': {label:'Base Metals', icon:'&#x25C6;', color:'#8e44ad', list:['Nickel','Copper']},
+  'Consumables': {label:'Consumables', icon:'&#x25A3;', color:'#27ae60', list:['Graphite']}
+};
+var COLS = ['#3498db','#e74c3c','#27ae60','#9b59b6','#e67e22','#1abc9c','#e91e63','#2196F3','#ff9800','#4caf50','#00bcd4','#673ab7','#ff5722','#009688','#607d8b'];
+
+var S = {
+  periods: ["Mar-26 Avg","Apr-26 Week-14","Week-15","Week-16","Week-17"],
+  commodities: [
+    {name:"Al Cube", index:"Nalco (Rs/MT)", prices:[349147.81,362149.75,367565.99,null,null]},
+    {name:"Al Coil", index:"Nalco (Rs/MT)", prices:[354547,367750,373250,null,null]},
+    {name:"HcFeMn", index:"Bigmint (Rs/MT)", prices:[78664,85650,92123,null,null]},
+    {name:"SiMn", index:"Bigmint (Rs/MT)", prices:[78210,85207,91489,null,null]},
+    {name:"LcFeCr", index:"Bigmint (Rs/MT)-60% Cr", prices:[249560,254360,257632,null,null]},
+    {name:"FeTi 70%", index:"Fastmarket ($/kg)-100% Ti", prices:[395388,403476,401728,null,null]},
+    {name:"Nickel", index:"LME ($/MT)", prices:[1656201.7,1652050,1651195,null,null]},
+    {name:"FeSi", index:"Bigmint", prices:[107340,111605,113625,null,null]},
+    {name:"FeNb (62% Nb)", index:"Fastmarket/CBMM ($/kg of Nb)", prices:[3227720,3490976,3475645.69,null,null]},
+    {name:"FeV(75%)", index:"Fastmarket ($/kg)-100% V", prices:[2141614,2185180,2161538,null,null]},
+    {name:"FeMo lumps (60% Mo)", index:"Platts ($/kg of 100% Mo)", prices:[3804222.85,3786455,3762426,null,null]},
+    {name:"Copper", index:"LME ($/MT)", prices:[1241902.43,1216061,1240428,null,null]},
+    {name:"Graphite Electrode (750/700)", index:"Bigmint (Rs/MT)", prices:[290550,290550,290550,null,null]},
+    {name:"Graphite Electrode (450/400)", index:"Bigmint (Rs/MT)", prices:[246450,246450,246450,null,null]}
+  ],
+  selIdx: 0,
+  tab: 'All'
+};
+
+/* Week date ranges - add more as you update */
+var WEEK_DATES = {
+  'Week-14': '31 Mar - 6 Apr',
+  'Week-15': '7 Apr - 13 Apr',
+  'Week-16': '14 Apr - 20 Apr',
+  'Week-17': '21 Apr - 27 Apr',
+  'Week-18': '28 Apr - 4 May',
+  'Week-1': '5 May - 11 May',
+  'Week-2': '12 May - 18 May',
+  'Week-3': '19 May - 25 May',
+  'Week-4': '26 May - 1 Jun'
+};
+
+var tChart = null;
+var newsBusy = false;
+var newsLast = null;
+
+/* ---- HELPERS ---- */
+function getValidPrices(c) {
+  var result = [];
+  for (var i = 0; i < S.periods.length; i++) {
+    if (c.prices[i] != null) result.push({p: c.prices[i], i: i, lbl: S.periods[i]});
+  }
+  return result;
+}
+function isAvg(lbl) { return lbl.toLowerCase().indexOf('avg') >= 0; }
+function getAvgIdx() {
+  for (var i = 0; i < S.periods.length; i++) { if (isAvg(S.periods[i])) return i; }
+  return -1;
+}
+function getLatestPeriod() {
+  for (var i = S.periods.length - 1; i >= 0; i -= 1) {
+    for (var j = 0; j < S.commodities.length; j++) { if (S.commodities[j].prices[i] != null) return S.periods[i]; }
+  }
+  return S.periods[0] || '';
+}
+function getLatestWeekLabel() {
+  var lp = getLatestPeriod();
+  var shortLbl = lp.replace('Apr-26 ','').replace('May-26 ','').replace('Jun-26 ','');
+  var dateRange = '';
+  for (var key in WEEK_DATES) {
+    if (lp.indexOf(key) >= 0) { dateRange = WEEK_DATES[key]; break; }
+  }
+  return lp.toUpperCase() + (dateRange ? ' (' + dateRange + ')' : '');
+}
+function getFiltered() {
+  if (S.tab === 'All') return S.commodities;
+  var cat = CATS[S.tab];
+  if (!cat || !cat.list) return S.commodities;
+  return S.commodities.filter(function(c) {
+    return cat.list.some(function(n) { return c.name.indexOf(n) >= 0 || n.indexOf(c.name.slice(0,4)) >= 0; });
+  });
+}
+function getCat(name) {
+  var keys = Object.keys(CATS);
+  for (var k = 0; k < keys.length; k++) {
+    if (keys[k] === 'All') continue;
+    var cat = CATS[keys[k]];
+    if (cat.list) {
+      for (var n = 0; n < cat.list.length; n++) {
+        if (name.indexOf(cat.list[n]) >= 0 || cat.list[n].indexOf(name.slice(0,4)) >= 0) return keys[k];
+      }
+    }
+  }
+  return 'Ferro Alloys';
+}
+function pct(a, b) { if (!a || !b) return null; return ((b - a) / a) * 100; }
+function fmt(v) {
+  if (v == null) return '-';
+  if (v >= 10000000) return (v/10000000).toFixed(2) + ' Cr';
+  if (v >= 100000) return (v/100000).toFixed(2) + ' L';
+  if (v >= 1000) return v.toLocaleString('en-IN', {maximumFractionDigits:0});
+  return v.toFixed(2);
+}
+function fmtF(v) { if (v == null) return '-'; return v.toLocaleString('en-IN', {maximumFractionDigits:0}); }
+function fmtP(v) { if (v == null) return '-'; return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
+
+/* Clean period label - remove duplicate "avg" */
+function cleanLbl(lbl) {
+  /* Remove repeated avg e.g. "Mar-26 Avg" stays, but "Mar Avg avg" becomes "Mar Avg" */
+  return lbl.replace(/\bavg\b/gi, function(m, offset, str) {
+    var before = str.substring(0, offset).toLowerCase();
+    return before.indexOf('avg') >= 0 ? '' : m;
+  }).replace(/\s+/g, ' ').trim();
+}
+
+/* ---- RENDER MARKET BAR ---- */
+function renderMktBar() {
+  var gainers = 0; var totChg = 0; var cnt = 0; var bigC = null; var bigV = 0;
+  for (var i = 0; i < S.commodities.length; i++) {
+    var c = S.commodities[i];
+    var wkVp = getValidPrices(c).filter(function(x) { return !isAvg(x.lbl); });
+    if (wkVp.length >= 2) {
+      var ch = pct(wkVp[wkVp.length-2].p, wkVp[wkVp.length-1].p);
+      if (ch > 0) gainers++;
+      totChg += ch; cnt++;
+      if (Math.abs(ch) > bigV) { bigV = Math.abs(ch); bigC = c; }
+    }
+  }
+  var losers = S.commodities.length - gainers;
+  var avgChg = cnt ? totChg / cnt : 0;
+  var items = [
+    {icon:'&#x1F4CA;', lbl:'Commodities', val:S.commodities.length, sub:S.commodities.length+' tracked', bg:'rgba(41,128,185,0.1)', tc:'#2980b9', bc:'#2980b9'},
+    {icon:'&#x1F4C8;', lbl:'Gainers W/W', val:gainers, sub:losers+' declining', bg:'rgba(39,174,96,0.1)', tc:'#27ae60', bc:'#27ae60'},
+    {icon:'~', lbl:'Avg W/W Move', val:(avgChg>=0?'+':'')+avgChg.toFixed(2)+'%', sub:'across all', bg:avgChg>=0?'rgba(39,174,96,0.1)':'rgba(231,76,60,0.1)', tc:avgChg>=0?'#27ae60':'#e74c3c', bc:avgChg>=0?'#27ae60':'#e74c3c'},
+    {icon:'&#x26A1;', lbl:'Most Active', val:bigC?bigC.name.split(' ')[0]:'-', sub:bigC?bigV.toFixed(2)+'% move':'', bg:'rgba(230,126,34,0.1)', tc:'#e67e22', bc:'#e67e22'}
+  ];
+  var html = '';
+  for (var m = 0; m < items.length; m++) {
+    var item = items[m];
+    html += '<div class="mkt-box" style="border-left-color:' + item.bc + '">';
+    html += '<div class="mkt-icon" style="background:' + item.bg + '">' + item.icon + '</div>';
+    html += '<div><div class="mkt-lbl">' + item.lbl + '</div><div class="mkt-val" style="color:' + item.tc + '">' + item.val + '</div><div class="mkt-sub">' + item.sub + '</div></div></div>';
+  }
+  document.getElementById('mkt-bar').innerHTML = html;
+}
+
+/* ---- RENDER TABS ---- */
+function renderTabs() {
+  var html = '';
+  var keys = Object.keys(CATS);
+  for (var k = 0; k < keys.length; k++) {
+    var key = keys[k];
+    var cat = CATS[key];
+    var cnt = cat.list ? S.commodities.filter(function(c) { return cat.list.some(function(n) { return c.name.indexOf(n) >= 0 || n.indexOf(c.name.slice(0,4)) >= 0; }); }).length : S.commodities.length;
+    var active = S.tab === key ? 'active' : '';
+    html += '<button class="tab-btn ' + active + '" onclick="switchTab(\'' + key + '\')">';
+    html += '<span>' + cat.icon + '</span><span>' + cat.label + '</span><span class="tab-count">' + cnt + '</span></button>';
+  }
+  document.getElementById('cat-tabs').innerHTML = html;
+}
+
+function switchTab(tab) {
+  S.tab = tab;
+  var filtered = getFiltered();
+  if (filtered.length > 0) S.selIdx = S.commodities.indexOf(filtered[0]);
+  renderTabs(); renderCards(); renderSelect(); applySelection(S.selIdx);
+}
+
+/* ---- RENDER CARDS ---- */
+function renderCards() {
+  var lp = getLatestPeriod();
+  var lbl = getLatestWeekLabel();
+  document.getElementById('live-text').textContent = lbl;
+  document.getElementById('snap-date').textContent = lbl;
+
+  var ai = getAvgIdx();
+  var wkPs = [];
+  for (var i = 0; i < S.periods.length; i++) {
+    if (!isAvg(S.periods[i]) && S.commodities.some(function(c) { return c.prices[i] != null; })) wkPs.push(S.periods[i]);
+  }
+  var legHtml = '';
+  if (ai >= 0) legHtml += '<span style="color:#e67e22;margin-right:10px;">&#9679; ' + cleanLbl(S.periods[ai]) + '</span>';
+  for (var w = Math.max(0, wkPs.length - 3); w < wkPs.length; w++) {
+    legHtml += '<span style="color:' + (w===wkPs.length-1?'#27ae60':'#95a5a6') + ';margin-right:10px;">&#9679; ' + wkPs[w] + '</span>';
+  }
+  legHtml += '<span style="color:#27ae60;font-weight:700;">&larr; Latest</span>';
+  document.getElementById('pl-legend').innerHTML = legHtml;
+
+  var filtered = getFiltered();
+  var html = '';
+  for (var fi = 0; fi < filtered.length; fi++) {
+    var c = filtered[fi];
+    var gi = S.commodities.indexOf(c);
+    var col = COLS[gi % COLS.length];
+    var wkVp = getValidPrices(c).filter(function(x) { return !isAvg(x.lbl); });
+    var latP = wkVp.length ? wkVp[wkVp.length-1] : null;
+    var prevP = wkVp.length >= 2 ? wkVp[wkVp.length-2] : null;
+    var avgVal = ai >= 0 ? c.prices[ai] : null;
+    var chgWW = (latP && prevP) ? pct(prevP.p, latP.p) : null;
+    var chgAvg = (latP && avgVal) ? pct(avgVal, latP.p) : null;
+    var catK = getCat(c.name);
+    var catC = CATS[catK] ? CATS[catK].color : col;
+    var act = gi === S.selIdx ? 'active' : '';
+    var chgHtml = '';
+    if (chgWW != null) {
+      var cls = chgWW > 0 ? 'up' : chgWW < 0 ? 'dn' : 'fl';
+      var arr = chgWW > 0 ? '&#9650;' : chgWW < 0 ? '&#9660;' : '-';
+      chgHtml = '<span class="pchg ' + cls + '">' + arr + ' ' + Math.abs(chgWW).toFixed(2) + '%</span>';
+    }
+    var refLbl = prevP ? 'vs ' + prevP.lbl.replace('Apr-26 ','').replace('May-26 ','').replace('Jun-26 ','') : '';
+    var avgLine = '';
+    if (chgAvg != null) {
+      var ac = chgAvg >= 0 ? '#27ae60' : '#e74c3c';
+      var aa = chgAvg >= 0 ? '&#9650;' : '&#9660;';
+      var avgLblShort = ai >= 0 ? cleanLbl(S.periods[ai]).replace('Mar-26 ','Mar ').replace('Apr-26 ','Apr ').replace('May-26 ','May ') : 'month';
+      avgLine = '<div class="vs-avg-row" style="color:' + ac + '">' + aa + ' ' + Math.abs(chgAvg).toFixed(2) + '% vs ' + avgLblShort + '</div>';
+    }
+    html += '<div class="pcard fu ' + act + '" style="--cc:' + col + '" onclick="selectCommodity(' + gi + ')">';
+    html += '<div class="pc-cat" style="color:' + catC + '">' + catK + '</div>';
+    html += '<div class="pc-name">' + c.name + '</div>';
+    html += '<div class="pc-price">' + fmt(latP ? latP.p : null) + '</div>';
+    html += '<div class="pc-idx">' + c.index + '</div>';
+    html += '<div class="pc-footer">' + chgHtml + '<span class="pchg-ref">' + refLbl + '</span></div>';
+    html += avgLine + '</div>';
+  }
+  document.getElementById('cards-grid').innerHTML = html;
+}
+
+/* ---- RENDER SELECT ---- */
+function renderSelect() {
+  var filtered = getFiltered();
+  var html = '';
+  for (var i = 0; i < filtered.length; i++) {
+    var gi = S.commodities.indexOf(filtered[i]);
+    html += '<option value="' + gi + '"' + (gi === S.selIdx ? ' selected' : '') + '>' + filtered[i].name + '</option>';
+  }
+  document.getElementById('sel').innerHTML = html;
+}
+
+function selectCommodity(idx) {
+  S.selIdx = idx;
+  document.getElementById('sel').value = idx;
+  renderCards();
+  applySelection(idx);
+}
+
+function applySelection(idx) {
+  var c = S.commodities[idx];
+  var col = COLS[idx % COLS.length];
+  document.getElementById('sel-idx').textContent = c.index;
+  document.getElementById('trend-name').textContent = c.name;
+  var ai = getAvgIdx();
+  var avgVal = ai >= 0 ? c.prices[ai] : null;
+  var wkVp = getValidPrices(c).filter(function(x) { return !isAvg(x.lbl); });
+  document.getElementById('sel-pi').textContent = wkVp.length + ' weekly periods' + (avgVal ? ' - Monthly avg: ' + fmt(avgVal) : '');
+  renderTrend(c, col);
+  renderTable(c);
+  renderStats(c, col);
+  /* News: use tab context for news topic */
+  var newsTopic;
+  if (S.tab === 'All') {
+    newsTopic = 'all ferro alloys commodities';
+  } else if (S.tab !== 'All' && S.selIdx === S.commodities.indexOf(getFiltered()[0]) && getFiltered().length > 1) {
+    newsTopic = S.tab;
+  } else {
+    newsTopic = c.name;
+  }
+  document.getElementById('news-badge').textContent = (S.tab === 'All' ? 'All Commodities' : S.tab === 'Ferro Alloys' || S.tab === 'Aluminium' || S.tab === 'Base Metals' || S.tab === 'Consumables' ? S.tab : c.name).toUpperCase();
+  if (newsLast !== newsTopic) { newsLast = null; }
+  fetchNewsFor(newsTopic, false);
+}
+
+/* ---- TREND CHART ---- */
+function renderTrend(c, color) {
+  var ai = getAvgIdx();
+  var avgVal = ai >= 0 ? c.prices[ai] : null;
+  var wkVp = getValidPrices(c).filter(function(x) { return !isAvg(x.lbl); });
+  var pts = [];
+  if (avgVal != null) pts.push({p: avgVal, lbl: cleanLbl(S.periods[ai]), isAvg: true});
+  var startIdx = avgVal != null ? Math.max(0, wkVp.length - 3) : Math.max(0, wkVp.length - 4);
+  for (var i = startIdx; i < wkVp.length; i++) pts.push(wkVp[i]);
+  var chipsHtml = '';
+  for (var ci = 0; ci < pts.length; ci++) {
+    var isLast = ci === pts.length - 1 && !pts[ci].isAvg;
+    chipsHtml += '<span class="chip ' + (pts[ci].isAvg ? 'avg' : (isLast ? 'latest' : '')) + '">' + pts[ci].lbl + '</span>';
+  }
+  document.getElementById('trend-chips').innerHTML = chipsHtml;
+  var labels = pts.map(function(p) { return p.lbl.replace('Apr-26 ','').replace('May-26 ','').replace('Jun-26 ',''); });
+  var data = pts.map(function(p) { return p.p; });
+  if (tChart) { tChart.destroy(); tChart = null; }
+  var ctx = document.getElementById('trend-chart').getContext('2d');
+  var g = ctx.createLinearGradient(0, 0, 0, 220);
+  g.addColorStop(0, color + '40');
+  g.addColorStop(1, color + '05');
+  tChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: labels, datasets: [{
+      data: data, borderColor: color, backgroundColor: g, borderWidth: 2.5,
+      pointBackgroundColor: pts.map(function(p) { return p.isAvg ? '#e67e22' : color; }),
+      pointRadius: pts.map(function(p, i) { return i === pts.length-1 ? 7 : 5; }),
+      pointHoverRadius: 9, tension: 0.4, fill: true
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: {display:false}, tooltip: {
+        backgroundColor: '#fff', borderColor: '#e8ecef', borderWidth: 1,
+        titleColor: '#7f8c8d', bodyColor: '#1a2332', bodyFont: {family:'Calibri',size:13}, padding: 12,
+        callbacks: { label: function(ctx) { return ' Rs ' + fmtF(ctx.raw); } }
+      }},
+      scales: {
+        x: { grid: {color:'rgba(0,0,0,0.04)'}, ticks: {color:'#7f8c8d', font:{family:'Calibri',size:12}} },
+        y: { grid: {color:'rgba(0,0,0,0.04)'}, ticks: { color:'#7f8c8d', font:{family:'Calibri',size:12},
+          callback: function(v) { if(v>=100000)return(v/100000).toFixed(1)+'L'; if(v>=1000)return(v/1000).toFixed(0)+'k'; return v; }
+        }}
+      }
+    }
+  });
+  var allV = data.filter(function(v) { return v != null; });
+  document.getElementById('r-low').textContent = fmt(Math.min.apply(null, allV));
+  document.getElementById('r-avg').textContent = fmt(avgVal);
+  document.getElementById('r-latest').textContent = fmt(data[data.length-1]);
+  document.getElementById('r-high').textContent = fmt(Math.max.apply(null, allV));
+}
+
+/* ---- TABLE ---- */
+function renderTable(c) {
+  var ai = getAvgIdx();
+  var avgVal = ai >= 0 ? c.prices[ai] : null;
+  var all = getValidPrices(c);
+  var html = '';
+  for (var i = 0; i < all.length; i++) {
+    var row = all[i];
+    var prev = i > 0 ? all[i-1] : null;
+    var ww = prev ? pct(prev.p, row.p) : null;
+    var isA = isAvg(row.lbl);
+    var vsA = (!isA && avgVal) ? pct(avgVal, row.p) : null;
+    var isL = i === all.length - 1;
+    var wwH = ww != null ? '<span class="' + (ww>0?'cup':ww<0?'cdn':'cfl') + '">' + fmtP(ww) + '</span>' : '<span class="cfl">-</span>';
+    var vaH = vsA != null ? '<span class="' + (vsA>0?'cup':vsA<0?'cdn':'cfl') + '">' + fmtP(vsA) + '</span>' : '<span class="cfl">-</span>';
+    var rowClass = isL ? 'lr' : (isA ? 'avgr' : '');
+    var avgTag = isA ? ' <span style="font-size:9px;color:#e67e22;margin-left:4px;font-family:Calibri;">[Monthly]</span>' : '';
+    html += '<tr class="' + rowClass + '"><td>' + cleanLbl(row.lbl) + avgTag + '</td><td>' + fmtF(row.p) + '</td><td>' + wwH + '</td><td>' + vaH + '</td></tr>';
+  }
+  document.getElementById('tbl-body').innerHTML = html;
+}
+
+/* ---- STATS ---- */
+function renderStats(c, color) {
+  var ai = getAvgIdx();
+  var avgVal = ai >= 0 ? c.prices[ai] : null;
+  var wkVp = getValidPrices(c).filter(function(x) { return !isAvg(x.lbl); });
+  var allV = getValidPrices(c).map(function(x) { return x.p; });
+  if (!allV.length) return;
+  var latV = wkVp.length ? wkVp[wkVp.length-1].p : allV[allV.length-1];
+  var prevV = wkVp.length >= 2 ? wkVp[wkVp.length-2].p : null;
+  var ww = prevV ? pct(prevV, latV) : null;
+  var vsA = avgVal ? pct(avgVal, latV) : null;
+  var high = Math.max.apply(null, allV);
+  var low = Math.min.apply(null, allV);
+  var wVals = wkVp.map(function(x) { return x.p; });
+  var ma2 = wVals.length >= 2 ? (wVals[wVals.length-1]+wVals[wVals.length-2])/2 : null;
+  var ma3 = wVals.length >= 3 ? (wVals[wVals.length-1]+wVals[wVals.length-2]+wVals[wVals.length-3])/3 : null;
+  var ma4 = wVals.length >= 4 ? (wVals[wVals.length-1]+wVals[wVals.length-2]+wVals[wVals.length-3]+wVals[wVals.length-4])/4 : null;
+  var vol = null;
+  if (wVals.length >= 2) { var cs=0; for(var i=1;i<wVals.length;i++)cs+=Math.abs(pct(wVals[i-1],wVals[i])); vol=cs/(wVals.length-1); }
+  var prevLbl = wkVp.length >= 2 ? wkVp[wkVp.length-2].lbl.replace('Apr-26 ','').replace('May-26 ','') : 'prior week';
+  var avgLbl = ai >= 0 ? cleanLbl(S.periods[ai]).replace('Mar-26 ','').replace('Apr-26 ','') : 'month avg';
+  var statItems = [
+    {l:'Latest Price', v:fmtF(latV), s:c.index.split('(')[0].trim(), c:'b'},
+    {l:'W/W Change', v:fmtP(ww), s:'vs '+prevLbl, c:ww>0?'g':ww<0?'r':''},
+    {l:'vs '+avgLbl, v:fmtP(vsA), s:'from monthly avg', c:vsA>0?'g':vsA<0?'r':''},
+    {l:'Volatility', v:vol!=null?vol.toFixed(2)+'%':'-', s:'avg weekly move', c:vol>3?'r':vol>1.5?'o':'g'},
+    {l:'Period High', v:fmt(high), s:'all periods', c:'g'},
+    {l:'Period Low', v:fmt(low), s:'all periods', c:'r'}
+  ];
+  var sgHtml = '';
+  for (var si = 0; si < statItems.length; si++) {
+    var st = statItems[si];
+    sgHtml += '<div class="sbox"><div class="slbl">'+st.l+'</div><div class="sval '+st.c+'">'+st.v+'</div><div class="ssub">'+st.s+'</div></div>';
+  }
+  document.getElementById('sgrid').innerHTML = sgHtml;
+  var mas = [];
+  if (ma2!=null) mas.push({l:'2-Week MA',v:ma2}); if (ma3!=null) mas.push({l:'3-Week MA',v:ma3}); if (ma4!=null) mas.push({l:'4-Week MA',v:ma4});
+  var mm = mas.length ? Math.max.apply(null, mas.map(function(m){return m.v;})) : 1;
+  var maHtml = '';
+  for (var mi = 0; mi < mas.length; mi++) {
+    var ma = mas[mi]; var bar = mm ? (ma.v/mm)*100 : 0;
+    var d = pct(ma.v, latV);
+    var ds = d!=null ? '<span style="font-size:10px;margin-left:6px;color:'+(d>=0?'#27ae60':'#e74c3c')+'">'+fmtP(d)+'</span>' : '';
+    maHtml += '<div class="ma-row"><span class="ma-lbl">'+ma.l+'</span><div class="ma-right"><span class="ma-val">'+fmtF(ma.v)+ds+'</span><div class="ma-bar-w"><div class="ma-bar" style="width:'+bar+'%;background:'+color+';"></div></div></div></div>';
+  }
+  document.getElementById('ma-sec').innerHTML = maHtml;
+  var mcHtml = '';
+  if (avgVal) {
+    mcHtml = '<div class="mc-box"><div class="mc-lbl">Monthly Average</div><div class="mc-val" style="color:#e67e22">'+fmtF(avgVal)+'</div><div class="mc-sub">'+cleanLbl(S.periods[ai])+'</div></div>';
+    mcHtml += '<div class="mc-box"><div class="mc-lbl">Current vs Avg</div><div class="mc-val" style="color:'+(vsA>=0?'#27ae60':'#e74c3c')+'">'+fmtP(vsA)+'</div><div class="mc-sub">'+fmtF(Math.abs(latV-avgVal))+' abs diff</div></div>';
+  }
+  document.getElementById('month-comp').innerHTML = mcHtml;
+}
+
+/* ---- NEWS (smart by tab/commodity) ---- */
+function fetchNews(force) {
+  var c = S.commodities[S.selIdx];
+  var topic;
+  if (S.tab === 'All') {
+    topic = 'all ferro alloys commodities including aluminium, manganese, chromium, nickel, copper, vanadium, molybdenum, niobium, silicon, graphite electrodes';
+  } else if (S.tab !== 'All') {
+    var filtered = getFiltered();
+    var names = filtered.map(function(x){return x.name;}).join(', ');
+    topic = S.tab + ' commodities (' + names + ')';
+  }
+  document.getElementById('news-badge').textContent = (S.tab === 'All' ? 'All Commodities' : S.tab).toUpperCase();
+  fetchNewsFor(topic, force);
+}
+
+function fetchNewsFor(topic, force) {
+  if (!force && newsLast === topic) return;
+  if (newsBusy) return;
+  newsBusy = true; newsLast = topic;
+  document.getElementById('rbtn').classList.add('spin');
+  document.getElementById('news-grid').innerHTML = '<div class="nload">Fetching market intelligence...</div>';
+  var prompt = 'You are a senior commodity analyst for Indian ferro alloys and raw materials markets. Generate 6 specific market news items for: "' + topic + '" in April 2026. Focus on: Indian market prices, import/export trends, Chinese supply, LME moves, downstream steel demand, policy changes. Respond ONLY with a JSON array (no markdown) of 6 objects: headline (max 12 words), summary (2-3 sentences with specific numbers), sentiment ("bullish"|"bearish"|"neutral"), source (e.g. Metal Bulletin, Bigmint, Fastmarkets, Steel360, LME, S&P Platts).';
+  fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1400,messages:[{role:'user',content:prompt}]})
+  }).then(function(r){return r.json();}).then(function(d){
+    var txt=(d.content||[]).map(function(b){return b.text||'';}).join('');
+    renderNews(JSON.parse(txt.replace(/```json|```/g,'').trim()));
+    newsBusy=false; document.getElementById('rbtn').classList.remove('spin');
+  }).catch(function(){
+    renderNews(fallbackNews(topic));
+    newsBusy=false; document.getElementById('rbtn').classList.remove('spin');
+  });
+}
+
+function renderNews(articles) {
+  var html='';
+  for(var i=0;i<articles.length;i++){
+    var a=articles[i]; var cls=a.sentiment==='bullish'?'bull':a.sentiment==='bearish'?'bear':'neut';
+    html+='<div class="ncard '+cls+' fu"><div class="nmeta"><span class="nsrc">'+a.source+'</span><span class="ntag '+cls+'">'+a.sentiment+'</span></div><div class="nhead">'+a.headline+'</div><div class="nbody">'+a.summary+'</div></div>';
+  }
+  document.getElementById('news-grid').innerHTML=html;
+}
+
+function fallbackNews(topic) {
+  return [
+    {headline:'Ferro alloy markets steady amid Q2 positioning',summary:'Indian ferro alloy spot markets are broadly stable as buyers and sellers position for Q2 contract negotiations. Steel mill procurement activity remains measured with most end-users holding adequate inventories.',sentiment:'neutral',source:'Metal Bulletin'},
+    {headline:'India steel output rises 5.2% YoY in March 2026',summary:'India produced 12.4 million tonnes of crude steel in March 2026, up 5.2% year-on-year. Rising EAF adoption is boosting demand for ferro alloys with EAF share now at 32% of total output.',sentiment:'bullish',source:'Steel360'},
+    {headline:'Chinese ferro alloy exports hit 6-month high',summary:'Chinese ferro alloy exports rose to 285,000 tonnes in March, adding pressure to Asian spot markets. Indian importers are benefiting from 3-4% lower landed costs versus domestic alternatives.',sentiment:'bearish',source:'Bigmint'},
+    {headline:'LME base metals supported by weaker US dollar',summary:'A pullback in the US dollar index to 99.1 has provided support to LME base metals. Nickel and copper both posted weekly gains of 1.5-2.3% with speculative positioning turning net-long.',sentiment:'bullish',source:'LME'},
+    {headline:'FeV demand supported by revised BIS rebar standards',summary:'Indian rebar mills continue to raise vanadium microalloying ratios following BIS 1786:2024 updates. FeV procurement enquiries have increased 15% month-on-month, underpinning near-term prices.',sentiment:'bullish',source:'Fastmarkets'},
+    {headline:'Graphite electrode supply tightening on EAF growth',summary:'Global graphite electrode availability is tightening as new EAF capacity additions in India absorb inventory. Prices have stabilised at current levels with upside risk building into H2 2026.',sentiment:'neutral',source:'S&P Platts'}
+  ];
+}
+
+/* ---- PDF DOWNLOAD ---- */
+function downloadPDF() {
+  var ai = getAvgIdx();
+  var lp = getLatestPeriod();
+  var lbl = getLatestWeekLabel();
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"/>';
+  html += '<style>';
+  html += 'body{font-family:Calibri,Arial,sans-serif;margin:0;padding:0;background:#fff;color:#1a2332;}';
+  html += '.page{width:210mm;min-height:297mm;padding:16mm 14mm;page-break-after:always;box-sizing:border-box;}';
+  html += '.page:last-child{page-break-after:avoid;}';
+  html += '.header{background:linear-gradient(135deg,#1e3a5f,#2d6a9f);color:white;padding:18px 22px;border-radius:10px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;}';
+  html += '.header h1{font-size:22px;font-weight:700;margin:0;}';
+  html += '.header p{font-size:11px;opacity:0.8;margin:3px 0 0;}';
+  html += '.header-right{text-align:right;font-size:11px;}';
+  html += '.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}';
+  html += '.card{background:#f8f9fa;border:1px solid #e8ecef;border-radius:8px;padding:12px;border-top:3px solid #2980b9;}';
+  html += '.card-cat{font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#7f8c8d;margin-bottom:4px;font-weight:700;}';
+  html += '.card-name{font-size:11px;font-weight:700;color:#2c3e50;margin-bottom:6px;}';
+  html += '.card-price{font-size:18px;font-weight:700;color:#1a2332;margin-bottom:3px;}';
+  html += '.card-idx{font-size:8px;color:#95a5a6;margin-bottom:6px;}';
+  html += '.up{color:#27ae60;font-weight:700;}.dn{color:#e74c3c;font-weight:700;}.fl{color:#95a5a6;}';
+  html += '.chg{font-size:11px;font-weight:700;}';
+  html += '.avg-chg{font-size:9px;margin-top:3px;}';
+  html += '.sec-title{font-size:13px;font-weight:700;color:#1e3a5f;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid #2980b9;padding-bottom:6px;margin:16px 0 12px;}';
+  html += '.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}';
+  html += '.stat-box{background:#f8f9fa;border:1px solid #e8ecef;border-radius:8px;padding:12px;text-align:center;}';
+  html += '.stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:#7f8c8d;margin-bottom:5px;font-weight:600;}';
+  html += '.stat-val{font-size:20px;font-weight:700;}';
+  html += '.stat-sub{font-size:9px;color:#95a5a6;margin-top:2px;}';
+  html += '.table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px;}';
+  html += '.table th{background:#1e3a5f;color:white;padding:8px 10px;text-align:left;font-weight:700;font-size:10px;letter-spacing:0.5px;}';
+  html += '.table th:not(:first-child){text-align:right;}';
+  html += '.table td{padding:7px 10px;border-bottom:1px solid #f0f4f8;font-size:11px;}';
+  html += '.table td:not(:first-child){text-align:right;font-weight:600;}';
+  html += '.table tr:nth-child(even){background:#fafbfc;}';
+  html += '.table tr.latest{background:rgba(41,128,185,0.08);}';
+  html += '.table tr.latest td:first-child{color:#2980b9;font-weight:700;}';
+  html += '.footer{text-align:center;font-size:9px;color:#95a5a6;margin-top:12px;padding-top:8px;border-top:1px solid #e8ecef;}';
+  html += '@media print{.page{page-break-after:always;}.page:last-child{page-break-after:avoid;}}';
+  html += '</style></head><body>';
+
+/* PAGE 1: All Price Cards */
+html += ‘<div class="page">’;
+html += ‘<div class="header"><div><h1>⬡ Commodity Tracker</h1><p>Ferro Alloys MIS 2026 - Price Report</p></div><div class="header-right"><div style="font-size:16px;font-weight:700;">’ + lbl + ’</div><div>Generated: ’ + new Date().toLocaleDateString(‘en-IN’,{day:‘2-digit’,month:‘short’,year:‘numeric’}) + ‘</div></div></div>’;
+html += ‘<div style="font-size:12px;font-weight:600;color:#1e3a5f;margin-bottom:10px;">ALL COMMODITY LATEST PRICES</div>’;
+html += ‘<div class="grid">’;
+
+for (var i = 0; i < S.commodities.length; i++) {
+var c = S.commodities[i];
+var col = COLS[i % COLS.length];
+var wkVp = getValidPrices(c).filter(function(x){return !isAvg(x.lbl);});
+var latP = wkVp.length ? wkVp[wkVp.length-1] : null;
+var prevP = wkVp.length >= 2 ? wkVp[wkVp.length-2] : null;
+var avgVal = ai >= 0 ? c.prices[ai] : null;
+var chgWW = (latP && prevP) ? pct(prevP.p, latP.p) : null;
+var chgAvg = (latP && avgVal) ? pct(avgVal, latP.p) : null;
+var chgClass = chgWW > 0 ? ‘up’ : chgWW < 0 ? ‘dn’ : ‘fl’;
+var chgArr = chgWW > 0 ? ‘▲’ : chgWW < 0 ? ‘▼’ : ‘-’;
+var catK = getCat(c.name);
+html += ‘<div class="card" style="border-top-color:' + col + '">’;
+html += ‘<div class="card-cat" style="color:' + (CATS[catK]?CATS[catK].color:col) + '">’ + catK + ‘</div>’;
+html += ‘<div class="card-name">’ + c.name + ‘</div>’;
+html += ‘<div class="card-price">’ + fmt(latP?latP.p:null) + ‘</div>’;
+html += ‘<div class="card-idx">’ + c.index + ‘</div>’;
+if (chgWW != null) html += ‘<div class="chg ' + chgClass + '">’ + chgArr + ’ ’ + Math.abs(chgWW).toFixed(2) + ‘% W/W</div>’;
+if (chgAvg != null) {
+var ac2 = chgAvg >= 0 ? ‘#27ae60’ : ‘#e74c3c’;
+var aa2 = chgAvg >= 0 ? ‘▲’ : ‘▼’;
+html += ‘<div class="avg-chg" style="color:' + ac2 + '">’ + aa2 + ’ ’ + Math.abs(chgAvg).toFixed(2) + ’% vs ’ + cleanLbl(S.periods[ai]).replace(‘Mar-26 ‘,’’).replace(‘Apr-26 ‘,’’) + ‘</div>’;
+}
+html += ‘</div>’;
+}
+html += ‘</div>’;
+
+/* Summary stats on page 1 */
+var gainers2 = 0; var totChg2 = 0; var cnt2 = 0;
+for (var si2 = 0; si2 < S.commodities.length; si2++) {
+var c2 = S.commodities[si2];
+var wkVp2 = getValidPrices(c2).filter(function(x){return !isAvg(x.lbl);});
+if (wkVp2.length >= 2) {
+var ch2 = pct(wkVp2[wkVp2.length-2].p, wkVp2[wkVp2.length-1].p);
+if (ch2 > 0) gainers2++;
+totChg2 += ch2; cnt2++;
+}
+}
+var avgChg2 = cnt2 ? totChg2/cnt2 : 0;
+html += ‘<div class="sec-title">Market Summary</div>’;
+html += ‘<div class="stats-grid">’;
+html += ‘<div class="stat-box"><div class="stat-lbl">Total Commodities</div><div class="stat-val" style="color:#2980b9">’ + S.commodities.length + ‘</div><div class="stat-sub">tracked</div></div>’;
+html += ‘<div class="stat-box"><div class="stat-lbl">Gainers W/W</div><div class="stat-val" style="color:#27ae60">’ + gainers2 + ‘</div><div class="stat-sub">’ + (S.commodities.length-gainers2) + ’ declining</div></div>’;
+html += ‘<div class="stat-box"><div class="stat-lbl">Avg W/W Move</div><div class="stat-val" style="color:' + (avgChg2>=0?'#27ae60':'#e74c3c') + '">’ + (avgChg2>=0?’+’:’’) + avgChg2.toFixed(2) + ‘%</div><div class="stat-sub">all commodities</div></div>’;
+html += ‘<div class="stat-box"><div class="stat-lbl">Data Period</div><div class="stat-val" style="color:#e67e22;font-size:13px;">’ + lp + ‘</div><div class="stat-sub">’ + S.periods.length + ’ periods</div></div>’;
+html += ‘</div>’;
+html += ‘<div class="footer">Commodity Tracker - Ferro Alloys MIS 2026 | Confidential | Page 1 of 2</div>’;
+html += ‘</div>’;
+
+/* PAGE 2: Detailed stats per commodity */
+html += ‘<div class="page">’;
+html += ‘<div class="header"><div><h1>⬡ Commodity Tracker</h1><p>Ferro Alloys MIS 2026 - Detailed Statistics</p></div><div class="header-right"><div style="font-size:16px;font-weight:700;">’ + lbl + ’</div><div>Generated: ’ + new Date().toLocaleDateString(‘en-IN’,{day:‘2-digit’,month:‘short’,year:‘numeric’}) + ‘</div></div></div>’;
+html += ‘<div class="sec-title">Period Price History - All Commodities</div>’;
+html += ‘<table class="table"><thead><tr><th>Commodity</th><th>Index</th>’;
+for (var pi = 0; pi < S.periods.length; pi++) {
+if (S.commodities.some(function(c3){return c3.prices[pi]!=null;})) html += ‘<th>’ + cleanLbl(S.periods[pi]) + ‘</th>’;
+}
+html += ‘<th>W/W Chg</th><th>vs Month Avg</th></tr></thead><tbody>’;
+
+for (var ri = 0; ri < S.commodities.length; ri++) {
+var rc = S.commodities[ri];
+var rwkVp = getValidPrices(rc).filter(function(x){return !isAvg(x.lbl);});
+var rlatP = rwkVp.length ? rwkVp[rwkVp.length-1] : null;
+var rprevP = rwkVp.length >= 2 ? rwkVp[rwkVp.length-2] : null;
+var ravgVal = ai >= 0 ? rc.prices[ai] : null;
+var rww = (rlatP && rprevP) ? pct(rprevP.p, rlatP.p) : null;
+var rvsA = (rlatP && ravgVal) ? pct(ravgVal, rlatP.p) : null;
+var isLatest = ri === S.selIdx;
+html += ‘<tr’ + (isLatest?’ class=“latest”’:’’) + ‘>’;
+html += ‘<td style="font-weight:700">’ + rc.name + ‘</td>’;
+html += ‘<td style="font-size:9px;color:#7f8c8d">’ + rc.index.split(’(’)[0].trim() + ‘</td>’;
+for (var pj = 0; pj < S.periods.length; pj++) {
+if (S.commodities.some(function(c4){return c4.prices[pj]!=null;})) {
+html += ‘<td>’ + (rc.prices[pj]!=null?fmt(rc.prices[pj]):’-’) + ‘</td>’;
+}
+}
+var wwStr = rww!=null ? ‘<span style="color:' + (rww>0?'#27ae60':'#e74c3c') + '">’ + fmtP(rww) + ‘</span>’ : ‘-’;
+var vsStr = rvsA!=null ? ‘<span style="color:' + (rvsA>0?'#27ae60':'#e74c3c') + '">’ + fmtP(rvsA) + ‘</span>’ : ‘-’;
+html += ‘<td>’ + wwStr + ‘</td><td>’ + vsStr + ‘</td></tr>’;
+}
+html += ‘</tbody></table>’;
+html += ‘<div class="footer">Commodity Tracker - Ferro Alloys MIS 2026 | Confidential | Page 2 of 2</div>’;
+html += ‘</div></body></html>’;
+
+var blob = new Blob([html], {type:‘text/html’});
+var url = URL.createObjectURL(blob);
+var win = window.open(url,’_blank’);
+if (win) {
+win.onload = function() { setTimeout(function() { win.print(); }, 500); };
+}
+showToast(‘PDF report opened - use Print > Save as PDF’);
+}
+
+/* –– EXCEL UPLOAD –– */
+document.getElementById(‘file-input’).addEventListener(‘change’, function(e) {
+var f = e.target.files[0]; if (f) handleFile(f); e.target.value=’’;
+});
+
+function handleFile(file) {
+if (currentRole !== ‘admin’) { showToast(‘Only admins can update data.’, true); return; }
+var reader = new FileReader();
+reader.onload = function(e) {
+try {
+var wb = XLSX.read(new Uint8Array(e.target.result), {type:‘array’});
+var ws = wb.Sheets[wb.SheetNames[0]];
+var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:’’});
+var hdr = -1;
+for (var i=0;i<Math.min(6,rows.length);i++) {
+var s=rows[i].join(’ ‘).toLowerCase();
+if(s.indexOf(‘index’)>=0&&(s.indexOf(‘week’)>=0||s.indexOf(‘month’)>=0||s.indexOf(‘avg’)>=0)){hdr=i;break;}
+}
+if(hdr===-1){showToast(‘Cannot detect header row.’,true);return;}
+var pCols=[];
+for(var ci=2;ci<rows[hdr].length;ci++){
+var h=String(rows[hdr][ci]||’’).trim(); if(!h)continue;
+var hl=h.toLowerCase();
+if(hl.indexOf(‘month’)>=0||hl.indexOf(‘avg’)>=0||hl.indexOf(‘week’)>=0||/^w\d{1,2}$/i.test(h)){
+var pre=’’;
+if(hdr>0){var mv=rows[hdr-1][ci];
+if(mv instanceof Date)pre=mv.toLocaleDateString(‘en-GB’,{month:‘short’,year:‘2-digit’}).replace(’ ‘,’-’)+’ ‘;
+else if(typeof mv===‘number’&&mv>40000){try{var dd=XLSX.SSF.parse_date_code(mv);pre=[‘Jan’,‘Feb’,‘Mar’,‘Apr’,‘May’,‘Jun’,‘Jul’,‘Aug’,‘Sep’,‘Oct’,‘Nov’,‘Dec’][dd.m-1]+’-’+String(dd.y).slice(2)+’ ‘;}catch(ex){}}
+else if(mv&&String(mv).match(/\d{4}/))pre=String(mv).substring(0,6)+’ ‘;
+}
+pCols.push({col:ci,label:(pre+h).trim()});
+}
+}
+if(!pCols.length){showToast(‘No period columns found.’,true);return;}
+var newC=[];
+for(var r=hdr+2;r<rows.length;r++){
+var row=rows[r]; var name=String(row[0]||’’).trim(); var idx=String(row[1]||’’).trim();
+if(!name)continue;
+var prices=pCols.map(function(pc){var v=row[pc.col];var n=typeof v===‘number’?v:parseFloat(String(v).replace(/[^0-9.-]/g,’’));return isNaN(n)?null:parseFloat(n.toFixed(2));});
+if(prices.some(function(p){return p!==null;}))newC.push({name:name,index:idx,prices:prices});
+}
+if(!newC.length){showToast(‘No data found.’,true);return;}
+S.periods=pCols.map(function(p){return p.label;}); S.commodities=newC; S.selIdx=Math.min(S.selIdx,newC.length-1); newsLast=null;
+init(); showToast(‘Updated - ‘+newC.length+’ commodities, ‘+S.periods.length+’ periods’);
+} catch(err){showToast(’Parse error: ’+err.message,true);}
+};
+reader.readAsArrayBuffer(file);
+}
+
+function showToast(msg,isErr){
+var el=document.getElementById(‘toast’); el.textContent=msg;
+el.style.borderColor=isErr?’#e74c3c’:’#27ae60’; el.style.color=isErr?’#e74c3c’:’#27ae60’;
+el.classList.add(‘show’); setTimeout(function(){el.classList.remove(‘show’);},4000);
+}
+
+function init(){
+renderMktBar(); renderTabs(); renderCards(); renderSelect(); applySelection(S.selIdx);
+}
+</script>
+
+</body>
+</html>
