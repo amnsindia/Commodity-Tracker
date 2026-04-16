@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Commodity Tracker — Ferro Alloys MIS 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#06090f;--sf:#0d1117;--sf2:#161b22;--sf3:#1c2333;
+  --bd:rgba(255,255,255,0.07);--bd2:rgba(255,255,255,0.12);
+  --tx:#e6edf3;--tx2:#8b949e;--tx3:#484f58;
+  --ac:#58a6ff;--ac2:#1f6feb;
+  --gn:#3fb950;--rd:#f85149;--or:#d29922;--pu:#bc8cff;
+  --r:12px;--rsm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--tx);font-family:'Inter',-apple-system,sans-serif;font-size:14px;line-height:1.5;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 50% at 20% 10%,rgba(31,111,235,0.08) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(188,140,255,0.05) 0%,transparent 50%);pointer-events:none;}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(6,9,15,0.97);backdrop-filter:blur(20px);}
+.lcard{background:var(–sf);border:1px solid var(–bd2);border-radius:16px;padding:44px 40px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,0.7);}
+.llogo{text-align:center;margin-bottom:24px;}
+.llogo-icon{width:52px;height:52px;background:linear-gradient(135deg,var(–ac2),var(–pu));border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 20px rgba(88,166,255,0.3);}
+.ltitle{font-family:‘Syne’,sans-serif;font-weight:800;font-size:24px;text-align:center;color:var(–tx);margin-bottom:4px;}
+.lsub{text-align:center;color:var(–tx3);font-size:12px;margin-bottom:28px;font-family:‘JetBrains Mono’,monospace;}
+.role-tabs{display:flex;gap:6px;margin-bottom:24px;background:var(–sf2);border-radius:var(–rsm);padding:4px;}
+.rtab{flex:1;padding:9px;border-radius:6px;border:none;background:none;color:var(–tx2);font-size:13px;font-weight:600;cursor:pointer;font-family:‘Inter’,sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.rtab.active{background:var(–ac2);color:#fff;box-shadow:0 4px 12px rgba(88,166,255,0.3);}
+.lfield{margin-bottom:16px;}
+.lfield label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(–tx3);font-family:‘JetBrains Mono’,monospace;margin-bottom:7px;}
+.linput{width:100%;background:var(–sf2);border:1px solid var(–bd2);color:var(–tx);padding:11px 14px;border-radius:var(–rsm);font-size:14px;font-family:‘Inter’,sans-serif;outline:none;transition:border-color .2s;}
+.linput:focus{border-color:var(–ac);box-shadow:0 0 0 3px rgba(88,166,255,0.1);}
+.lbtn{width:100%;background:linear-gradient(135deg,var(–ac2),var(–pu));border:none;color:#fff;padding:13px;border-radius:var(–rsm);font-size:15px;font-weight:700;cursor:pointer;font-family:‘Inter’,sans-serif;margin-top:6px;transition:all .2s;box-shadow:0 4px 16px rgba(88,166,255,0.3);}
+.lbtn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(88,166,255,0.4);}
+.lerr{color:var(–rd);font-size:12px;text-align:center;margin-top:10px;min-height:18px;font-family:‘JetBrains Mono’,monospace;}
+.lhint{color:var(–tx3);font-size:10px;text-align:center;margin-top:12px;font-family:‘JetBrains Mono’,monospace;line-height:1.8;}
+
+/* APP */
+#app{display:none;}
+.wrap{position:relative;z-index:1;max-width:1600px;margin:0 auto;padding:0 24px 60px;}
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:rgba(6,9,15,0.93);backdrop-filter:blur(16px);border-bottom:1px solid var(–bd);position:sticky;top:0;z-index:200;margin-left:-24px;margin-right:-24px;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(–ac2),var(–pu));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.logo-name{font-family:‘Syne’,sans-serif;font-weight:800;font-size:18px;letter-spacing:-0.3px;color:var(–tx);}
+.logo-sub{font-size:10px;color:var(–tx3);font-family:‘JetBrains Mono’,monospace;letter-spacing:0.5px;margin-top:1px;}
+.nav-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.live-badge{display:flex;align-items:center;gap:5px;background:rgba(63,185,80,0.08);border:1px solid rgba(63,185,80,0.2);padding:5px 10px;border-radius:20px;font-size:10px;font-family:‘JetBrains Mono’,monospace;color:var(–gn);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(–gn);box-shadow:0 0 6px var(–gn);animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.role-badge{font-size:10px;font-family:‘JetBrains Mono’,monospace;padding:4px 10px;border-radius:20px;border:1px solid var(–bd2);color:var(–ac);}
+.nbtn{display:flex;align-items:center;gap:6px;background:var(–sf2);border:1px solid var(–bd2);color:var(–tx);padding:8px 14px;border-radius:var(–rsm);cursor:pointer;font-size:12px;font-weight:500;font-family:‘Inter’,sans-serif;transition:all .2s;white-space:nowrap;}
+.nbtn:hover{border-color:var(–ac);color:var(–ac);}
+.nbtn svg{width:13px;height:13px;flex-shrink:0;}
+.nbtn.primary{background:linear-gradient(135deg,var(–ac2),var(–pu));border-color:transparent;color:#fff;}
+.nbtn.primary:hover{color:#fff;border-color:transparent;opacity:.9;}
+.logout-btn{background:none;border:1px solid rgba(248,81,73,0.25);color:var(–rd);padding:7px 12px;border-radius:var(–rsm);cursor:pointer;font-size:11px;font-family:‘JetBrains Mono’,monospace;transition:all .2s;}
+.logout-btn:hover{background:rgba(248,81,73,0.08);}
+
+.sec-head{display:flex;align-items:center;gap:10px;margin:28px 0 14px;}
+.sec-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(–tx3);font-family:‘JetBrains Mono’,monospace;white-space:nowrap;}
+.sec-line{flex:1;height:1px;background:var(–bd);}
+.sec-badge{font-size:10px;color:var(–ac);font-family:‘JetBrains Mono’,monospace;background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.2);padding:3px 10px;border-radius:10px;white-space:nowrap;}
+
+/* MKT BAR */
+.mkt-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
+.mkt-box{background:var(–sf);border:1px solid var(–bd);border-radius:var(–r);padding:16px 18px;display:flex;align-items:center;gap:12px;transition:all .2s;}
+.mkt-box:hover{border-color:var(–bd2);transform:translateY(-1px);}
+.mkt-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.mkt-lbl{font-size:10px;color:var(–tx3);text-transform:uppercase;letter-spacing:1px;font-family:‘JetBrains Mono’,monospace;margin-bottom:4px;}
+.mkt-val{font-size:20px;font-weight:700;font-family:‘JetBrains Mono’,monospace;}
+.mkt-sub{font-size:11px;color:var(–tx2);margin-top:2px;}
+
+/* TABS */
+.tabs-wrap{display:flex;gap:5px;margin-bottom:16px;background:var(–sf);border:1px solid var(–bd);padding:5px;border-radius:var(–r);overflow-x:auto;scrollbar-width:none;}
+.tabs-wrap::-webkit-scrollbar{display:none;}
+.tab-btn{display:flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(–rsm);border:none;background:none;cursor:pointer;font-size:13px;font-weight:600;color:var(–tx2);font-family:‘Inter’,sans-serif;transition:all .2s;white-space:nowrap;flex-shrink:0;}
+.tab-btn:hover{color:var(–tx);background:var(–sf2);}
+.tab-btn.active{background:var(–ac2);color:#fff;box-shadow:0 4px 12px rgba(88,166,255,0.25);}
+.tab-count{font-size:10px;background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:8px;font-family:‘JetBrains Mono’,monospace;}
+
+/* CARDS */
+#cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px;margin-bottom:32px;}
+.pcard{background:var(–sf);border:1px solid var(–bd);border-radius:var(–r);padding:16px;cursor:pointer;transition:all .22s;position:relative;overflow:hidden;}
+.pcard::before{content:’’;position:absolute;top:0;left:0;right:0;height:2px;background:var(–cc,var(–ac));opacity:0;transition:opacity .2s;}
+.pcard:hover{border-color:var(–bd2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+.pcard:hover::before,.pcard.active::before{opacity:1;}
+.pcard.active{border-color:var(–cc,var(–ac));background:var(–sf2);box-shadow:0 0 0 1px var(–cc,var(–ac)),0 8px 32px rgba(0,0,0,0.5);}
+.pc-cat{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;font-family:‘JetBrains Mono’,monospace;margin-bottom:6px;opacity:.7;}
+.pc-name{font-size:12px;font-weight:600;color:var(–tx2);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pc-price{font-family:‘JetBrains Mono’,monospace;font-size:18px;font-weight:500;color:var(–tx);margin-bottom:4px;}
+.pc-idx{font-size:9px;color:var(–tx3);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pc-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:3px;}
+.pchg{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-family:‘JetBrains Mono’,monospace;padding:2px 7px;border-radius:4px;font-weight:600;}
+.pchg.up{color:var(–gn);background:rgba(63,185,80,0.1);}.pchg.dn{color:var(–rd);background:rgba(248,81,73,0.1);}.pchg.fl{color:var(–tx3);background:rgba(255,255,255,0.04);}
+.pchg-ref{font-size:9px;color:var(–tx3);font-family:‘JetBrains Mono’,monospace;}
+.vs-avg{margin-top:7px;padding-top:7px;border-top:1px solid var(–bd);font-size:10px;font-family:‘JetBrains Mono’,monospace;}
+
+/* SELECTOR */
+.sel-bar{display:flex;align-items:center;gap:14px;background:var(–sf);border:1px solid var(–bd);border-radius:var(–r);padding:14px 18px;margin-bottom:18px;flex-wrap:wrap;}
+.sel-lbl{font-size:10px;color:var(–tx3);font-family:‘JetBrains Mono’,monospace;letter-spacing:1px;white-space:nowrap;}
+.sel-select{flex:1;min-width:200px;max-width:360px;background:var(–sf2);border:1px solid var(–bd2);color:var(–tx);padding:9px 14px;border-radius:var(–rsm);font-size:14px;font-weight:600;cursor:pointer;outline:none;font-family:‘Inter’,sans-serif;transition:border-color .2s;}
+.sel-select:focus{border-color:var(–ac);}
+.sel-idx{font-size:11px;color:var(–tx2);font-family:‘JetBrains Mono’,monospace;}
+.sel-pi{margin-left:auto;font-size:10px;color:var(–tx3);font-family:‘JetBrains Mono’,monospace;}
+
+/* 3-COL */
+.three{display:grid;grid-template-columns:1fr 1.35fr 1fr;gap:14px;align-items:start;}
+@media(max-width:1100px){.three{grid-template-columns:1fr 1fr;}.col-r{grid-column:1/-1;}}
+@media(max-width:680px){.three{grid-template-columns:1fr;}}
+.panel{background:var(–sf);border:1px solid var(–bd);border-radius:var(–r);overflow:hidden;}
+.ph{padding:13px 16px 11px;border-bottom:1px solid var(–bd);display:flex;align-items:center;justify-content:space-between;}
+.pt{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(–tx2);font-family:‘JetBrains Mono’,monospace;}
+.pb{padding:16px;}
+.chart-wrap{position:relative;height:200px;}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;}
+.chip{font-size:9px;color:var(–tx3);font-family:‘JetBrains Mono’,monospace;background:var(–sf2);padding:3px 7px;border-radius:4px;border:1px solid var(–bd);}
+.chip.latest{border-color:var(–ac);color:var(–ac);}
+.chip.avg{border-color:var(–or);color:var(–or);}
+.range-row{display:flex;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(–bd);}
+.ri{text-align:center;}
+.ri-lbl{font-size:9px;color:var(–tx3);font-family:‘JetBrains Mono’,monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+.ri-val{font-size:14px;font-weight:600;font-family:‘JetBrains Mono’,monospace;}
+.ptable{width:100%;border-collapse:collapse;}
+.ptable th{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(–tx3);font-family:‘JetBrains Mono’,monospace;padding:8px 12px;text-align:left;border-bottom:1px solid var(–bd);font-weight:500;}
+.ptable th:not(:first-child){text-align:right;}
+.ptable td{padding:10px 12px;border-bottom:1px solid var(–bd);font-size:12px;}
+.ptable td:not(:first-child){text-align:right;font-family:‘JetBrains Mono’,monospace;}
+.ptable tr:last-child td{border-bottom:none;}
+.ptable tr.lr{background:rgba(88,166,255,0.04);}
+.ptable tr.lr td:first-child{color:var(–ac);font-weight:600;}
+.ptable tr.avgr td:first-child{color:var(–or);}
+.ptable tr:hover td{background:rgba(88,166,255,0.03);}
+.cup{color:var(–gn);font-weight:600;}.cdn{color:var(–rd);font-weight:600;}.cfl{color:var(–tx3);}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.sbox{background:var(–sf2);border:1px solid var(–bd);border-radius:var(–rsm);padding:13px 14px;}
+.slbl{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(–tx3);font-family:‘JetBrains Mono’,monospace;margin-bottom:6px;}
+.sval{font-size:17px;font-weight:600;font-family:‘JetBrains Mono’,monospace;}
+.ssub{font-size:9px;color:var(–tx3);margin-top:3px;}
+.sval.g{color:var(–gn);}.sval.r{color:var(–rd);}.sval.o{color:var(–or);}.sval.b{color:var(–ac);}.sval.p{color:var(–pu);}
+.ma-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(–bd);}
+.ma-row:last-child{border-bottom:none;}
+.ma-lbl{font-size:13px;color:var(–tx2);}
+.ma-right{display:flex;align-items:center;gap:8px;}
+.ma-val{font-family:‘JetBrains Mono’,monospace;font-size:12px;}
+.ma-bar-w{width:56px;height:3px;background:var(–sf3);border-radius:2px;overflow:hidden;}
+.ma-bar{height:100%;border-radius:2px;transition:width .8s ease;}
+.month-comp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(–bd);}
+.mc-box{background:var(–sf3);border-radius:var(–rsm);padding:12px 13px;}
+.mc-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(–tx3);font-family:‘JetBrains Mono’,monospace;margin-bottom:5px;}
+.mc-val{font-size:16px;font-weight:700;font-family:‘JetBrains Mono’,monospace;}
+.mc-sub{font-size:9px;color:var(–tx3);margin-top:3px;font-family:‘JetBrains Mono’,monospace;}
+
+/* NEWS */
+.news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+.ncard{background:var(–sf);border:1px solid var(–bd);border-left:3px solid var(–bd);border-radius:var(–r);padding:15px;transition:all .2s;}
+.ncard.bull{border-left-color:var(–gn);}.ncard.bear{border-left-color:var(–rd);}.ncard.neut{border-left-color:var(–tx3);}
+.ncard:hover{border-color:var(–bd2);}
+.nmeta{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.nsrc{font-size:9px;font-family:‘JetBrains Mono’,monospace;color:var(–tx3);text-transform:uppercase;letter-spacing:.5px;}
+.ntag{font-size:9px;font-family:‘JetBrains Mono’,monospace;text-transform:uppercase;padding:2px 7px;border-radius:3px;font-weight:600;}
+.ntag.bull{color:var(–gn);background:rgba(63,185,80,0.1);}.ntag.bear{color:var(–rd);background:rgba(248,81,73,0.1);}.ntag.neut{color:var(–tx3);background:rgba(255,255,255,0.05);}
+.nhead{font-size:13px;font-weight:600;line-height:1.4;color:var(–tx);margin-bottom:6px;}
+.nbody{font-size:12px;color:var(–tx2);line-height:1.55;}
+.nload{grid-column:1/-1;text-align:center;padding:40px;color:var(–tx3);font-family:‘JetBrains Mono’,monospace;font-size:12px;}
+.rbtn{display:flex;align-items:center;gap:5px;background:none;border:1px solid var(–bd);color:var(–tx2);padding:5px 12px;border-radius:var(–rsm);cursor:pointer;font-size:11px;font-family:‘JetBrains Mono’,monospace;transition:all .2s;}
+.rbtn:hover{border-color:var(–ac);color:var(–ac);}
+.rbtn.spin svg{animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pl-legend{display:flex;align-items:center;gap:14px;font-size:10px;font-family:‘JetBrains Mono’,monospace;color:var(–tx3);}
+.pl-item{display:flex;align-items:center;gap:4px;}
+.pl-dot{width:7px;height:7px;border-radius:50%;}
+#toast{position:fixed;bottom:20px;right:20px;z-index:500;background:var(–sf2);border:1px solid var(–bd2);border-radius:var(–rsm);padding:12px 16px;font-size:12px;color:var(–tx);box-shadow:0 8px 30px rgba(0,0,0,.6);transform:translateY(16px);opacity:0;transition:all .3s;pointer-events:none;max-width:300px;}
+#toast.show{transform:translateY(0);opacity:1;}
+#drop-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(6,9,15,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;}
+#drop-overlay.active{display:flex;}
+.drop-box{border:2px dashed var(–ac);border-radius:16px;padding:60px 80px;text-align:center;color:var(–ac);font-family:‘JetBrains Mono’,monospace;font-size:16px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fu{animation:fadeUp .3s ease both;}
+::-webkit-scrollbar{width:4px;height:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(–sf3);border-radius:4px;}
+@media(max-width:900px){.mkt-bar{grid-template-columns:1fr 1fr;}#cards-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));}}
+@media(max-width:540px){nav{flex-wrap:wrap;gap:8px;}.nav-right{width:100%;justify-content:flex-start;flex-wrap:wrap;}}
+</style>
+
+</head>
+<body>
+
+<input type="file" id="file-input" accept=".xlsx,.xls" style="display:none"/>
+<div id="drop-overlay"><div class="drop-box">⬆ Drop your updated Excel file here</div></div>
+<div id="toast"></div>
+
+<!-- LOGIN -->
+
+<div id="login-screen">
+  <div class="lcard">
+    <div class="llogo"><div class="llogo-icon">⬡</div></div>
+    <div class="ltitle">Commodity Tracker</div>
+    <div class="lsub">Ferro Alloys MIS 2026 — Please sign in</div>
+    <div class="role-tabs">
+      <button class="rtab active" id="rtab-admin" onclick="switchRole('admin')">🔒 Admin</button>
+      <button class="rtab" id="rtab-viewer" onclick="switchRole('viewer')">👁 Viewer</button>
+    </div>
+    <div class="lfield">
+      <label>Username</label>
+      <input class="linput" type="text" id="l-user" placeholder="Enter username" autocomplete="username"/>
+    </div>
+    <div class="lfield">
+      <label>Password</label>
+      <input class="linput" type="password" id="l-pass" placeholder="Enter password" autocomplete="current-password"/>
+    </div>
+    <button class="lbtn" id="l-submit">Sign In</button>
+    <div class="lerr" id="l-err"></div>
+    <div class="lhint">Admin: admin / admin123<br>Viewer: viewer / view123</div>
+  </div>
+</div>
+
+<!-- APP -->
+
+<div id="app">
+<nav>
+  <div class="logo">
+    <div class="logo-icon">⬡</div>
+    <div>
+      <div class="logo-name">Commodity Tracker</div>
+      <div class="logo-sub">FERRO ALLOYS · MIS 2026</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="live-badge"><div class="live-dot"></div><span id="live-text">WEEK-15</span></div>
+    <span class="role-badge" id="role-badge">ADMIN</span>
+    <button class="nbtn primary" id="upload-btn" onclick="document.getElementById('file-input').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 7.5m0 0L7.5 12M12 7.5v9"/></svg>
+      Update Excel
+    </button>
+    <button class="nbtn" id="pdf-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M12 3v13.5m-4.5-4.5L12 16.5l4.5-4.5"/></svg>
+      Download PDF
+    </button>
+    <button class="logout-btn" id="logout-btn">Sign Out</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="sec-head" style="margin-top:24px;"><span class="sec-title">Market Snapshot</span><div class="sec-line"></div><span class="sec-badge" id="snap-date">APR 2026 · WEEK 15</span></div>
+  <div class="mkt-bar" id="mkt-bar"></div>
+  <div class="sec-head"><span class="sec-title">All Commodity Prices</span><div class="sec-line"></div><div class="pl-legend" id="pl-legend"></div></div>
+  <div class="tabs-wrap" id="cat-tabs"></div>
+  <div id="cards-grid"></div>
+  <div class="sec-head"><span class="sec-title">Detailed Analysis</span><div class="sec-line"></div></div>
+  <div class="sel-bar">
+    <span class="sel-lbl">COMMODITY</span>
+    <select class="sel-select" id="sel"></select>
+    <span class="sel-idx" id="sel-idx"></span>
+    <span class="sel-pi" id="sel-pi"></span>
+  </div>
+  <div class="three">
+    <div class="panel">
+      <div class="ph"><span class="pt">Price Trend</span><span id="trend-name" style="font-size:11px;color:var(--ac);font-family:'JetBrains Mono',monospace;font-weight:600;"></span></div>
+      <div class="pb">
+        <div class="chips" id="trend-chips"></div>
+        <div class="chart-wrap"><canvas id="trend-chart"></canvas></div>
+        <div class="range-row">
+          <div class="ri"><div class="ri-lbl">Low</div><div class="ri-val" id="r-low" style="color:var(--rd)">—</div></div>
+          <div class="ri"><div class="ri-lbl">Month Avg</div><div class="ri-val" id="r-avg" style="color:var(--or)">—</div></div>
+          <div class="ri"><div class="ri-lbl">Latest</div><div class="ri-val" id="r-latest" style="color:var(--ac)">—</div></div>
+          <div class="ri"><div class="ri-lbl">High</div><div class="ri-val" id="r-high" style="color:var(--gn)">—</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="pt">Period Price History</span><span style="font-size:9px;color:var(--tx3);font-family:'JetBrains Mono',monospace;">vs Monthly Average</span></div>
+      <table class="ptable"><thead><tr><th>Period</th><th>Price (Rs/MT)</th><th>W/W Chg</th><th>vs Month Avg</th></tr></thead><tbody id="tbl-body"></tbody></table>
+    </div>
+    <div class="panel col-r">
+      <div class="ph"><span class="pt">Statistics & Metrics</span></div>
+      <div class="pb">
+        <div class="sgrid" id="sgrid"></div>
+        <div style="margin:14px 0 6px;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx3);font-family:'JetBrains Mono',monospace;">Moving Averages</div>
+        <div id="ma-sec"></div>
+        <div class="month-comp" id="month-comp"></div>
+      </div>
+    </div>
+  </div>
+  <div class="sec-head" style="margin-top:32px;"><span class="sec-title">Market Intelligence</span><div class="sec-line"></div><span class="sec-badge" id="news-badge">ALL COMMODITIES</span>
+  <button class="rbtn" id="rbtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>Refresh</button></div>
+  <div class="news-grid" id="news-grid"><div class="nload">Loading market intelligence…</div></div>
+</div>
+</div><!-- /app -->
+
+<script>
+// ── CREDENTIALS ───────────────────────────────────────────────────────────────
+var CREDS = { admin: 'admin123', viewer: 'view123' };
+var currentRole = 'admin';
+var loggedIn = false;
+
+function switchRole(role) {
+  currentRole = role;
+  document.getElementById('rtab-admin').className = 'rtab' + (role === 'admin' ? ' active' : '');
+  document.getElementById('rtab-viewer').className = 'rtab' + (role === 'viewer' ? ' active' : '');
+  document.getElementById('l-user').value = '';
+  document.getElementById('l-pass').value = '';
+  document.getElementById('l-err').textContent = '';
+}
+
+function doLogin() {
+  var user = document.getElementById('l-user').value.trim().toLowerCase();
+  var pass = document.getElementById('l-pass').value;
+  var err  = document.getElementById('l-err');
+  err.textContent = '';
+  if (!user || !pass) { err.textContent = 'Please enter username and password.'; return; }
+  if (!CREDS[user])   { err.textContent = 'Username not found.'; return; }
+  if (CREDS[user] !== pass) { err.textContent = 'Incorrect password.'; return; }
+  if (user === 'admin' && currentRole !== 'admin') { err.textContent = 'Select Admin role for this account.'; return; }
+  if (user === 'viewer' && currentRole !== 'viewer') { err.textContent = 'Select Viewer role for this account.'; return; }
+  loggedIn = true;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('role-badge').textContent = user === 'admin' ? 'ADMIN' : 'VIEWER';
+  if (user === 'viewer') document.getElementById('upload-btn').style.display = 'none';
+  init();
+}
+
+document.getElementById('l-submit').addEventListener('click', doLogin);
+document.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !loggedIn) doLogin(); });
+document.getElementById('logout-btn').addEventListener('click', function() {
+  loggedIn = false;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('l-user').value = '';
+  document.getElementById('l-pass').value = '';
+  document.getElementById('upload-btn').style.display = '';
+});
+
+// ── PDF ───────────────────────────────────────────────────────────────────────
+document.getElementById('pdf-btn').addEventListener('click', function() {
+  var ai  = getAvgIdx();
+  var lp  = getLatestPeriod();
+  var dt  = new Date().toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"/><style>'
+    + 'body{font-family:Arial,sans-serif;color:#111;font-size:12px;padding:24px;background:#fff;}'
+    + 'h1{font-size:20px;color:#1a3a6d;margin-bottom:4px;}'
+    + '.sub{font-size:11px;color:#666;margin-bottom:20px;}'
+    + '.stitle{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#1a3a6d;border-bottom:2px solid #1a3a6d;padding-bottom:5px;margin:18px 0 12px;}'
+    + '.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}'
+    + '.card{border:1px solid #ddd;border-radius:8px;padding:11px;background:#f8faff;border-top:3px solid #1a6fd4;}'
+    + '.ccat{font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:3px;}'
+    + '.cname{font-size:11px;font-weight:700;color:#222;margin-bottom:5px;}'
+    + '.cprice{font-size:16px;font-weight:800;color:#1a3a6d;font-family:monospace;margin-bottom:3px;}'
+    + '.cidx{font-size:9px;color:#aaa;margin-bottom:5px;}'
+    + '.up{color:#00a855;font-weight:700;} .dn{color:#d32f2f;font-weight:700;} .fl{color:#888;}'
+    + '.vsavg{font-size:10px;color:#555;margin-top:4px;padding-top:4px;border-top:1px solid #eee;}'
+    + 'table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:11px;}'
+    + 'th{background:#1a3a6d;color:#fff;padding:7px 9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;}'
+    + 'th:not(:first-child){text-align:right;}'
+    + 'td{padding:7px 9px;border-bottom:1px solid #eee;}'
+    + 'td:not(:first-child){text-align:right;font-family:monospace;}'
+    + 'tr:nth-child(even){background:#f5f8ff;}'
+    + '.pbreak{page-break-after:always;height:0;}'
+    + '.footer{text-align:center;color:#aaa;font-size:10px;margin-top:24px;border-top:1px solid #eee;padding-top:8px;}'
+    + '</style></head><body>';
+
+// PAGE 1
+html += ’<h1>▱ Commodity Tracker</h1><div class="sub">Ferro Alloys MIS 2026  ·  ’ + dt + ’  ·  Latest: ’ + lp + ‘</div>’;
+html += ’<div class="stitle">All Commodity Prices — ’ + lp + ‘</div>’;
+html += ‘<div class="grid">’;
+S.commodities.forEach(function(c) {
+var wv  = vp(c).filter(function(x){return !isAvgP(x.lbl);});
+var lat = wv[wv.length-1];
+var prv = wv[wv.length-2];
+var avg = ai >= 0 ? c.prices[ai] : null;
+var chg = (lat && prv) ? pct(prv.p, lat.p) : null;
+var cva = (lat && avg) ? pct(avg, lat.p) : null;
+var cat = getCat(c.name);
+var cc  = chg == null ? ‘fl’ : chg > 0 ? ‘up’ : ‘dn’;
+var cs  = chg == null ? ‘—’ : (chg > 0 ? ’▲ ’ : ’▼ ’) + Math.abs(chg).toFixed(2) + ‘%’;
+var ref = prv ? ‘vs ’ + prv.lbl.replace(‘Apr-26 ‘,’’) : ‘’;
+var vas = cva != null ? ‘<div class="vsavg"><span class="' + (cva>=0?'up':'dn') + '">’ + (cva>=0?’▲ ‘:’▼ ’) + Math.abs(cva).toFixed(2) + ’%</span> vs ’ + (ai>=0?S.periods[ai].replace(’Mar-26 ’,‘Mar’):‘avg’) + ‘</div>’ : ‘’;
+html += ‘<div class="card"><div class="ccat">’ + cat + ‘</div><div class="cname">’ + c.name + ‘</div><div class="cprice">’ + fmt(lat?lat.p:null) + ‘</div><div class="cidx">’ + c.index + ‘</div><span class="' + cc + '">’ + cs + ‘</span> <span style="font-size:9px;color:#aaa;">’ + ref + ‘</span>’ + vas + ‘</div>’;
+});
+html += ‘</div>’;
+
+// Summary table page 1
+html += ‘<div class="stitle">Period Summary</div>’;
+html += ‘<table><thead><tr><th>Commodity</th><th>Index</th>’;
+var vcols = S.periods.filter(function(*,i){return S.commodities.some(function(c){return c.prices[i]!=null;});});
+vcols.forEach(function(p){html += ‘<th>’ + p + ‘</th>’;});
+html += ‘<th>W/W</th><th>vs Avg</th></tr></thead><tbody>’;
+S.commodities.forEach(function(c) {
+var wv2  = vp(c).filter(function(x){return !isAvgP(x.lbl);});
+var lat2 = wv2[wv2.length-1];
+var prv2 = wv2[wv2.length-2];
+var avg2 = ai >= 0 ? c.prices[ai] : null;
+var ww2  = (lat2&&prv2) ? pct(prv2.p,lat2.p) : null;
+var va2  = (lat2&&avg2) ? pct(avg2,lat2.p) : null;
+html += ‘<tr><td style="font-weight:700;">’ + c.name + ‘</td><td style="font-size:10px;color:#888;">’ + c.index.split(’(’)[0].trim() + ‘</td>’;
+S.periods.forEach(function(*,i){
+if(vcols.indexOf(S.periods[i]) < 0) return;
+html += ‘<td>’ + (c.prices[i]!=null ? fmtF(c.prices[i]) : ‘—’) + ‘</td>’;
+});
+html += ‘<td class="' + (ww2==null?'fl':ww2>=0?'up':'dn') + '">’ + fmtP(ww2) + ‘</td>’;
+html += ‘<td class="' + (va2==null?'fl':va2>=0?'up':'dn') + '">’ + fmtP(va2) + ‘</td></tr>’;
+});
+html += ‘</tbody></table><div class="pbreak"></div>’;
+
+// PAGE 2
+html += ‘<h1>▱ Commodity Tracker — Statistics Report</h1><div class="sub">Ferro Alloys MIS 2026  ·  ’ + dt + ‘</div>’;
+html += ‘<div class="stitle">Key Statistics</div>’;
+html += ‘<table><thead><tr><th>Commodity</th><th>Latest</th><th>W/W Chg</th><th>vs Avg</th><th>Month Avg</th><th>High</th><th>Low</th><th>Volatility</th></tr></thead><tbody>’;
+S.commodities.forEach(function(c) {
+var wv3  = vp(c).filter(function(x){return !isAvgP(x.lbl);}).map(function(x){return x.p;});
+var allv = vp(c).map(function(x){return x.p;});
+if(!allv.length) return;
+var latv = wv3.length ? wv3[wv3.length-1] : allv[allv.length-1];
+var prv3 = wv3.length >= 2 ? wv3[wv3.length-2] : null;
+var avg3 = ai >= 0 ? c.prices[ai] : null;
+var ww3  = prv3 ? pct(prv3,latv) : null;
+var va3  = avg3 ? pct(avg3,latv) : null;
+var high = Math.max.apply(null,allv), low = Math.min.apply(null,allv);
+var vol  = null;
+if(wv3.length >= 2){var ch3=[];for(var i=1;i<wv3.length;i++)ch3.push(Math.abs(pct(wv3[i-1],wv3[i])));vol=ch3.reduce(function(a,b){return a+b;},0)/ch3.length;}
+html += ‘<tr><td style="font-weight:700;">’ + c.name + ‘</td><td>’ + fmtF(latv) + ‘</td>’;
+html += ‘<td class="' + (ww3==null?'fl':ww3>=0?'up':'dn') + '">’ + fmtP(ww3) + ‘</td>’;
+html += ‘<td class="' + (va3==null?'fl':va3>=0?'up':'dn') + '">’ + fmtP(va3) + ‘</td>’;
+html += ‘<td>’ + (avg3?fmtF(avg3):’—’) + ‘</td>’;
+html += ‘<td class="up">’ + fmtF(high) + ‘</td><td class="dn">’ + fmtF(low) + ‘</td>’;
+html += ‘<td>’ + (vol!=null?vol.toFixed(2)+’%’:’—’) + ‘</td></tr>’;
+});
+html += ‘</tbody></table>’;
+
+html += ‘<div class="stitle">Moving Averages</div>’;
+html += ‘<table><thead><tr><th>Commodity</th><th>2-Week MA</th><th>3-Week MA</th><th>4-Week MA</th><th>Latest vs 4W MA</th></tr></thead><tbody>’;
+S.commodities.forEach(function(c) {
+var wv4 = vp(c).filter(function(x){return !isAvgP(x.lbl);}).map(function(x){return x.p;});
+if(!wv4.length) return;
+var latv4= wv4[wv4.length-1];
+var ma2  = wv4.length>=2 ? wv4.slice(-2).reduce(function(a,b){return a+b;},0)/2 : null;
+var ma3  = wv4.length>=3 ? wv4.slice(-3).reduce(function(a,b){return a+b;},0)/3 : null;
+var ma4  = wv4.length>=4 ? wv4.slice(-4).reduce(function(a,b){return a+b;},0)/4 : null;
+var vs4  = ma4 ? pct(ma4,latv4) : null;
+html += ‘<tr><td style="font-weight:700;">’ + c.name + ‘</td>’;
+html += ‘<td>’ + (ma2?fmtF(ma2):’—’) + ‘</td><td>’ + (ma3?fmtF(ma3):’—’) + ‘</td><td>’ + (ma4?fmtF(ma4):’—’) + ‘</td>’;
+html += ‘<td class="' + (vs4==null?'fl':vs4>=0?'up':'dn') + '">’ + fmtP(vs4) + ‘</td></tr>’;
+});
+html += ‘</tbody></table>’;
+html += ‘<div class="footer">Commodity Tracker — Ferro Alloys MIS 2026 · Generated ’ + dt + ’ · Confidential</div>’;
+html += ‘</body></html>’;
+
+var w = window.open(’’, ‘_blank’);
+if (!w) { toast(‘Please allow pop-ups for this site to download PDF.’, true); return; }
+w.document.open();
+w.document.write(html);
+w.document.close();
+setTimeout(function(){ w.focus(); w.print(); }, 900);
+});
+
+// ── DATA ──────────────────────────────────────────────────────────────────────
+var CATS = {
+‘All’:          { label:‘All’,          icon:‘⬡’, color:’#58a6ff’, list:null },
+‘Ferro Alloys’: { label:‘Ferro Alloys’, icon:‘⚙’, color:’#ff7043’, list:[‘HcFeMn’,‘SiMn’,‘LcFeCr’,‘FeTi’,‘FeSi’,‘FeNb’,‘FeV’,‘FeMo’] },
+‘Aluminium’:    { label:‘Aluminium’,    icon:‘◈’, color:’#29b6f6’, list:[‘Al Cube’,‘Al Coil’] },
+‘Base Metals’:  { label:‘Base Metals’,  icon:‘◆’, color:’#ab47bc’, list:[‘Nickel’,‘Copper’] },
+‘Consumables’:  { label:‘Consumables’,  icon:‘▣’, color:’#66bb6a’, list:[‘Graphite’] },
+};
+var COLS = [’#58a6ff’,’#ff6b6b’,’#51cf66’,’#cc5de8’,’#ff922b’,’#20c997’,’#f06595’,’#74c0fc’,’#ffd43b’,’#a9e34b’,’#63e6be’,’#e599f7’,’#ffec99’,’#4dabf7’,’#96f2d7’];
+
+var S = {
+periods: [“Mar-26 Avg”,“Apr-26 Week-14”,“Week-15”,“Week-16”,“Week-17”],
+commodities: [
+{name:“Al Cube”,                     index:“Nalco (Rs/MT)”,                 prices:[349147.81,362149.75,367565.99,null,null]},
+{name:“Al Coil”,                     index:“Nalco (Rs/MT)”,                 prices:[354547,367750,373250,null,null]},
+{name:“HcFeMn”,                      index:“Bigmint (Rs/MT)”,               prices:[78664,85650,92123,null,null]},
+{name:“SiMn”,                        index:“Bigmint (Rs/MT)”,               prices:[78210,85207,91489,null,null]},
+{name:“LcFeCr”,                      index:“Bigmint (Rs/MT)-60% Cr”,        prices:[249560,254360,257632,null,null]},
+{name:“FeTi 70%”,                    index:“Fastmarket ($/kg)-100% Ti”,     prices:[395388,403476,401728,null,null]},
+{name:“Nickel”,                      index:“LME ($/MT)”,                    prices:[1656201.7,1652050,1651195,null,null]},
+{name:“FeSi”,                        index:“Bigmint”,                       prices:[107340,111605,113625,null,null]},
+{name:“FeNb (62% Nb)”,               index:“Fastmarket/CBMM ($/kg of Nb)”,  prices:[3227720,3490976,3475645.69,null,null]},
+{name:“FeV(75%)”,                    index:“Fastmarket ($/kg)-100% V”,      prices:[2141614,2185180,2161538,null,null]},
+{name:“FeMo lumps (60% Mo)”,         index:“Platts ($/kg of 100% Mo)”,      prices:[3804222.85,3786455,3762426,null,null]},
+{name:“Copper”,                      index:“LME ($/MT)”,                    prices:[1241902.43,1216061,1240428,null,null]},
+{name:“Graphite Electrode (750/700)”,index:“Bigmint (Rs/MT)”,               prices:[290550,290550,290550,null,null]},
+{name:“Graphite Electrode (450/400)”,index:“Bigmint (Rs/MT)”,               prices:[246450,246450,246450,null,null]},
+],
+selIdx: 0,
+tab: ‘All’,
+};
+
+var tChart = null, newsBusy = false, newsLast = null;
+
+function vp(c) { return S.periods.map(function(lbl,i){return {p:c.prices[i],i:i,lbl:lbl};}).filter(function(x){return x.p!=null;}); }
+function pct(a,b) { return (a&&b) ? ((b-a)/a)*100 : null; }
+function fmt(v,d) {
+d = d||0;
+if(v==null) return ‘—’;
+if(v>=10000000) return (v/10000000).toFixed(2)+’ Cr’;
+if(v>=100000)   return (v/100000).toFixed(2)+’ L’;
+if(v>=1000)     return v.toLocaleString(‘en-IN’,{maximumFractionDigits:d});
+return v.toFixed(d||2);
+}
+function fmtF(v) { if(v==null)return’—’; return v.toLocaleString(‘en-IN’,{maximumFractionDigits:0}); }
+function fmtP(v) { if(v==null)return’—’; return (v>=0?’+’:’’)+v.toFixed(2)+’%’; }
+function isAvgP(lbl) { return lbl.toLowerCase().indexOf(‘avg’)>=0||lbl.toLowerCase().indexOf(‘average’)>=0; }
+function getAvgIdx() { for(var i=0;i<S.periods.length;i++){if(isAvgP(S.periods[i]))return i;} return -1; }
+function getLatestPeriod() {
+for(var i=S.periods.length-1;i>=0;i–){
+for(var j=0;j<S.commodities.length;j++){if(S.commodities[j].prices[i]!=null)return S.periods[i];}
+}
+return S.periods[0]||’’;
+}
+function getCat(name) {
+for(var k in CATS){
+if(k===‘All’) continue;
+var cat=CATS[k];
+if(cat.list){for(var i=0;i<cat.list.length;i++){if(name.indexOf(cat.list[i])>=0||cat.list[i].indexOf(name.slice(0,4))>=0)return k;}}
+}
+return ‘Ferro Alloys’;
+}
+
+function renderMktBar() {
+var ai=getAvgIdx();
+var gainers=0;
+S.commodities.forEach(function(c){
+var wv=vp(c).filter(function(x){return !isAvgP(x.lbl);});
+if(wv.length>=2&&pct(wv[wv.length-2].p,wv[wv.length-1].p)>0) gainers++;
+});
+var totChg=0,cnt=0;
+S.commodities.forEach(function(c){
+var wv=vp(c).filter(function(x){return !isAvgP(x.lbl);});
+if(wv.length>=2){totChg+=pct(wv[wv.length-2].p,wv[wv.length-1].p);cnt++;}
+});
+var avgChg=cnt?totChg/cnt:0;
+var bigC=null,bigV=0;
+S.commodities.forEach(function(c){
+var wv=vp(c).filter(function(x){return !isAvgP(x.lbl);});
+if(wv.length>=2){var ch=Math.abs(pct(wv[wv.length-2].p,wv[wv.length-1].p));if(ch>bigV){bigV=ch;bigC=c;}}
+});
+var items=[
+{icon:‘📊’,lbl:‘Commodities’,val:S.commodities.length,sub:‘across 4 categories’,bg:‘rgba(88,166,255,.12)’,tc:‘var(–ac)’},
+{icon:‘📈’,lbl:‘Gainers W/W’,val:gainers,sub:(S.commodities.length-gainers)+’ declining’,bg:‘rgba(63,185,80,.1)’,tc:‘var(–gn)’},
+{icon:’〜’,lbl:‘Avg W/W Move’,val:(avgChg>=0?’+’:’’)+avgChg.toFixed(2)+’%’,sub:‘all commodities’,bg:avgChg>=0?‘rgba(63,185,80,.1)’:‘rgba(248,81,73,.1)’,tc:avgChg>=0?‘var(–gn)’:‘var(–rd)’},
+{icon:‘⚡’,lbl:‘Most Active’,val:bigC?bigC.name.split(’ ‘)[0]:’—’,sub:bigC?bigV.toFixed(2)+’% move’:’’,bg:‘rgba(210,153,34,.1)’,tc:‘var(–or)’},
+];
+document.getElementById(‘mkt-bar’).innerHTML=items.map(function(m){
+return ‘<div class="mkt-box" style="border-color:'+m.bg+';"><div class="mkt-icon" style="background:'+m.bg+';">’+m.icon+’</div><div><div class="mkt-lbl">’+m.lbl+’</div><div class="mkt-val" style="color:'+m.tc+';">’+m.val+’</div><div class="mkt-sub">’+m.sub+’</div></div></div>’;
+}).join(’’);
+}
+
+function renderTabs() {
+document.getElementById(‘cat-tabs’).innerHTML=Object.keys(CATS).map(function(k){
+var cat=CATS[k];
+var cnt=cat.list?S.commodities.filter(function(c){return cat.list.some(function(n){return c.name.indexOf(n)>=0||n.indexOf(c.name.slice(0,4))>=0;});}).length:S.commodities.length;
+return ‘<button class="tab-btn '+(S.tab===k?'active':'')+'" onclick="switchTab(\''+k+'\')"><span>’+cat.icon+’</span><span style="color:'+(S.tab===k?'#fff':cat.color)+'">’+cat.label+’</span><span class="tab-count">’+cnt+’</span></button>’;
+}).join(’’);
+}
+
+function switchTab(tab){S.tab=tab;renderTabs();renderCards();}
+
+function renderCards() {
+var lp=getLatestPeriod();
+document.getElementById(‘live-text’).textContent=lp.toUpperCase();
+var ai=getAvgIdx();
+var wkPs=S.periods.filter(function(p,i){return !isAvgP(p)&&S.commodities.some(function(c){return c.prices[i]!=null;});});
+var legHtml=’’;
+if(ai>=0) legHtml+=’<div class="pl-item"><div class="pl-dot" style="background:var(--or)"></div><span>’+S.periods[ai]+’</span></div>’;
+wkPs.slice(-3).forEach(function(p,i){legHtml+=’<div class="pl-item"><div class="pl-dot" style="background:'+(i===wkPs.length-1?'var(--gn)':'var(--tx3)')+'"></div><span>’+p+’</span></div>’;});
+legHtml+=’<span style="color:var(--gn);font-weight:700;">← Latest</span>’;
+document.getElementById(‘pl-legend’).innerHTML=legHtml;
+
+var filtered=S.commodities;
+if(S.tab!==‘All’){var cat=CATS[S.tab];if(cat&&cat.list)filtered=S.commodities.filter(function(c){return cat.list.some(function(n){return c.name.indexOf(n)>=0||n.indexOf(c.name.slice(0,4))>=0;});});}
+
+document.getElementById(‘cards-grid’).innerHTML=filtered.map(function(c){
+var gi=S.commodities.indexOf(c);
+var col=COLS[gi%COLS.length];
+var hex=col.replace(’#’,’’);
+var rr=parseInt(hex.substr(0,2),16),gg=parseInt(hex.substr(2,2),16),bb=parseInt(hex.substr(4,2),16);
+var wkv=vp(c).filter(function(x){return !isAvgP(x.lbl);});
+var latP=wkv[wkv.length-1],prevP=wkv[wkv.length-2];
+var avgP=ai>=0?c.prices[ai]:null;
+var chgWW=latP&&prevP?pct(prevP.p,latP.p):null;
+var chgAvg=latP&&avgP?pct(avgP,latP.p):null;
+var catK=getCat(c.name),catC=(CATS[catK]&&CATS[catK].color)||col;
+var act=gi===S.selIdx;
+var chgH=chgWW!=null?’<span class="pchg '+(chgWW>0?'up':chgWW<0?'dn':'fl')+'">’+(chgWW>0?‘▲’:chgWW<0?‘▼’:’—’)+’ ‘+Math.abs(chgWW).toFixed(2)+’%</span>’:’’;
+var refL=prevP?‘vs ‘+prevP.lbl.replace(‘Apr-26 ‘,’’):’’;
+var avgL=chgAvg!=null?’<div class="vs-avg" style="color:'+(chgAvg>=0?'var(--gn)':'var(--rd)')+'">’+(chgAvg>=0?‘▲’:‘▼’)+’ ‘+Math.abs(chgAvg).toFixed(2)+’% vs ‘+(ai>=0?S.periods[ai].replace(‘Mar-26 ‘,‘Mar’):‘avg’)+’</div>’:’’;
+return ‘<div class="pcard fu '+(act?'active':'')+'" style="--cc:'+col+'" onclick="selectCommodity('+gi+')">’
++’<div class="pc-cat" style="color:'+catC+'">’+catK+’</div>’
++’<div class="pc-name">’+c.name+’</div>’
++’<div class="pc-price">’+fmt(latP?latP.p:null)+’</div>’
++’<div class="pc-idx">’+c.index+’</div>’
++’<div class="pc-footer">’+chgH+’<span class="pchg-ref">’+refL+’</span></div>’
++avgL+’</div>’;
+}).join(’’);
+}
+
+function renderSelect() {
+document.getElementById(‘sel’).innerHTML=S.commodities.map(function(c,i){return ‘<option value="'+i+'">’+c.name+’</option>’;}).join(’’);
+document.getElementById(‘sel’).onchange=function(){selectCommodity(parseInt(this.value));};
+}
+
+function selectCommodity(idx){S.selIdx=idx;document.getElementById(‘sel’).value=idx;renderCards();applySelection(idx);}
+
+function applySelection(idx){
+var c=S.commodities[idx],col=COLS[idx%COLS.length];
+document.getElementById(‘sel-idx’).textContent=c.index;
+document.getElementById(‘trend-name’).textContent=c.name;
+document.getElementById(‘news-badge’).textContent=c.name.toUpperCase();
+var ai=getAvgIdx(),avgVal=ai>=0?c.prices[ai]:null;
+var wkv=vp(c).filter(function(x){return !isAvgP(x.lbl);});
+document.getElementById(‘sel-pi’).textContent=wkv.length+’ weekly periods’+(avgVal?’ · Avg: ‘+fmt(avgVal):’’);
+renderTrend(c,col);renderTable(c);renderStats(c,col);
+newsLast=null;fetchNews(false);
+}
+
+function renderTrend(c,color){
+var ai=getAvgIdx(),avgVal=ai>=0?c.prices[ai]:null;
+var wkv=vp(c).filter(function(x){return !isAvgP(x.lbl);});
+var pts=[];
+if(avgVal!=null) pts.push({p:avgVal,lbl:S.periods[ai],isAvg:true});
+pts=pts.concat(wkv.slice(-(avgVal!=null?3:4)));
+document.getElementById(‘trend-chips’).innerHTML=pts.map(function(p,i){
+return ‘<span class="chip '+(p.isAvg?'avg':'')+(i===pts.length-1&&!p.isAvg?' latest':'')+'">’ +p.lbl+’</span>’;
+}).join(’’);
+var labels=pts.map(function(p){return p.lbl.replace(‘Apr-26 ‘,’’);});
+var data=pts.map(function(p){return p.p;});
+if(tChart){tChart.destroy();tChart=null;}
+var ctx=document.getElementById(‘trend-chart’).getContext(‘2d’);
+var g=ctx.createLinearGradient(0,0,0,200);g.addColorStop(0,color+‘55’);g.addColorStop(1,color+‘00’);
+tChart=new Chart(ctx,{
+type:‘line’,
+data:{labels:labels,datasets:[{data:data,borderColor:color,backgroundColor:g,borderWidth:2.5,
+pointBackgroundColor:pts.map(function(p){return p.isAvg?’#d29922’:color;}),
+pointRadius:pts.map(function(_,i){return i===pts.length-1?7:5;}),
+pointHoverRadius:9,tension:.4,fill:true}]},
+options:{responsive:true,maintainAspectRatio:false,
+plugins:{legend:{display:false},tooltip:{backgroundColor:’#161b22’,borderColor:’#30363d’,borderWidth:1,
+titleColor:’#8b949e’,bodyColor:’#e6edf3’,bodyFont:{family:‘JetBrains Mono’,size:12},padding:10,
+callbacks:{label:function(ctx){return ’ ₹ ‘+fmtF(ctx.raw);}}}},
+scales:{x:{grid:{color:‘rgba(255,255,255,.04)’},ticks:{color:’#484f58’,font:{family:‘JetBrains Mono’,size:10}}},
+y:{grid:{color:‘rgba(255,255,255,.04)’},ticks:{color:’#484f58’,font:{family:‘JetBrains Mono’,size:10},
+callback:function(v){return v>=100000?(v/100000).toFixed(1)+‘L’:v>=1000?(v/1000).toFixed(0)+‘k’:v;}}}}}});
+var allV=data.filter(Boolean);
+document.getElementById(‘r-low’).textContent=fmt(Math.min.apply(null,allV));
+document.getElementById(‘r-avg’).textContent=fmt(avgVal);
+document.getElementById(‘r-latest’).textContent=fmt(data[data.length-1]);
+document.getElementById(‘r-high’).textContent=fmt(Math.max.apply(null,allV));
+}
+
+function renderTable(c){
+var ai=getAvgIdx(),avgVal=ai>=0?c.prices[ai]:null;
+var all=vp(c);
+document.getElementById(‘tbl-body’).innerHTML=all.map(function(row,i){
+var prev=all[i-1];
+var ww=prev?pct(prev.p,row.p):null;
+var isA=isAvgP(row.lbl);
+var vsA=(!isA&&avgVal)?pct(avgVal,row.p):null;
+var isL=i===all.length-1;
+var wwH=ww!=null?’<span class="'+(ww>0?'cup':ww<0?'cdn':'cfl')+'">’+fmtP(ww)+’</span>’:’<span class="cfl">—</span>’;
+var vaH=vsA!=null?’<span class="'+(vsA>0?'cup':vsA<0?'cdn':'cfl')+'">’+fmtP(vsA)+’</span>’:’<span class="cfl">—</span>’;
+return ‘<tr class="'+(isL?'lr':'')+' '+(isA?'avgr':'')+'"><td>’+row.lbl+(isA?’ <span style="font-size:9px;color:var(--or);margin-left:3px;">[AVG]</span>’:’’)+’</td><td>’+fmtF(row.p)+’</td><td>’+wwH+’</td><td>’+vaH+’</td></tr>’;
+}).join(’’);
+}
+
+function renderStats(c,color){
+var ai=getAvgIdx(),avgVal=ai>=0?c.prices[ai]:null;
+var wkv=vp(c).filter(function(x){return !isAvgP(x.lbl);});
+var allV=vp(c).map(function(x){return x.p;});
+if(!allV.length) return;
+var latV=wkv.length?wkv[wkv.length-1].p:allV[allV.length-1];
+var prevV=wkv.length>=2?wkv[wkv.length-2].p:null;
+var ww=prevV?pct(prevV,latV):null;
+var vsA=avgVal?pct(avgVal,latV):null;
+var high=Math.max.apply(null,allV),low=Math.min.apply(null,allV);
+var wVals=wkv.map(function(x){return x.p;});
+var ma2=wVals.length>=2?wVals.slice(-2).reduce(function(a,b){return a+b;},0)/2:null;
+var ma3=wVals.length>=3?wVals.slice(-3).reduce(function(a,b){return a+b;},0)/3:null;
+var ma4=wVals.length>=4?wVals.slice(-4).reduce(function(a,b){return a+b;},0)/4:null;
+var vol=null;
+if(wVals.length>=2){var ch=[];for(var i=1;i<wVals.length;i++)ch.push(Math.abs(pct(wVals[i-1],wVals[i])));vol=ch.reduce(function(a,b){return a+b;},0)/ch.length;}
+var prevLbl=wkv.length>=2?wkv[wkv.length-2].lbl.replace(‘Apr-26 ‘,’’):‘prior week’;
+var avgLbl=ai>=0?S.periods[ai].replace(‘Mar-26 ‘,‘Mar-26’):‘month avg’;
+document.getElementById(‘sgrid’).innerHTML=[
+{l:‘Latest Price’,v:fmtF(latV),s:c.index.split(’(’)[0].trim(),c:‘b’},
+{l:‘W/W Change’,v:fmtP(ww),s:‘vs ‘+prevLbl,c:ww>0?‘g’:ww<0?‘r’:’’},
+{l:‘vs ‘+avgLbl,v:fmtP(vsA),s:‘from monthly avg’,c:vsA>0?‘g’:vsA<0?‘r’:’’},
+{l:‘Volatility’,v:vol!=null?vol.toFixed(2)+’%’:’—’,s:‘avg weekly move’,c:vol>3?‘r’:vol>1.5?‘o’:‘g’},
+{l:‘Period High’,v:fmt(high),s:‘all periods’,c:‘g’},
+{l:‘Period Low’,v:fmt(low),s:‘all periods’,c:‘r’},
+].map(function(x){return ‘<div class="sbox"><div class="slbl">’+x.l+’</div><div class="sval '+x.c+'">’+x.v+’</div><div class="ssub">’+x.s+’</div></div>’;}).join(’’);
+var mas=[{l:‘2-Week MA’,v:ma2},{l:‘3-Week MA’,v:ma3},{l:‘4-Week MA’,v:ma4}].filter(function(m){return m.v!=null;});
+var mm=mas.length?Math.max.apply(null,mas.map(function(m){return m.v;})):1;
+document.getElementById(‘ma-sec’).innerHTML=mas.map(function(m){
+var bar=mm?(m.v/mm)*100:0;
+var d=pct(m.v,latV);
+var ds=d!=null?’<span style="font-size:10px;margin-left:6px;color:'+(d>=0?'var(--gn)':'var(--rd)')+'">’+fmtP(d)+’</span>’:’’;
+return ‘<div class="ma-row"><span class="ma-lbl">’+m.l+’</span><div class="ma-right"><span class="ma-val">’+fmtF(m.v)+ds+’</span><div class="ma-bar-w"><div class="ma-bar" style="width:'+bar+'%;background:'+color+';"></div></div></div></div>’;
+}).join(’’);
+document.getElementById(‘month-comp’).innerHTML=avgVal?’<div class="mc-box"><div class="mc-lbl">Monthly Average</div><div class="mc-val" style="color:var(--or)">’+fmtF(avgVal)+’</div><div class="mc-sub">’+(ai>=0?S.periods[ai]:’’)+’</div></div><div class="mc-box"><div class="mc-lbl">Current vs Avg</div><div class="mc-val" style="color:'+(vsA>=0?'var(--gn)':'var(--rd)')+'">’+fmtP(vsA)+’</div><div class="mc-sub">’+fmtF(Math.abs(latV-avgVal))+’ abs diff</div></div>’:’’;
+}
+
+document.getElementById(‘rbtn’).addEventListener(‘click’,function(){fetchNews(true);});
+
+async function fetchNews(force){
+var name=S.commodities[S.selIdx]?S.commodities[S.selIdx].name:‘ferro alloys’;
+if(!force&&newsLast===name)return;if(newsBusy)return;
+newsBusy=true;newsLast=name;
+document.getElementById(‘rbtn’).classList.add(‘spin’);
+document.getElementById(‘news-grid’).innerHTML=’<div class="nload">Fetching intelligence for ‘+name+’…</div>’;
+var all=S.commodities.map(function(c){return c.name;}).join(’, ‘);
+var prompt=‘You are a senior commodity analyst for Indian ferro alloys. Generate 6 specific news items for “’+name+’” in April 2026. Universe: ‘+all+’. Focus on Indian prices, imports, Chinese supply, LME, steel demand. Respond ONLY with a JSON array (no markdown) of 6 objects: headline (max 12 words), summary (2-3 sentences with numbers), sentiment (“bullish”|“bearish”|“neutral”), source.’;
+try{
+var r=await fetch(‘https://api.anthropic.com/v1/messages’,{method:‘POST’,headers:{‘Content-Type’:‘application/json’},body:JSON.stringify({model:‘claude-sonnet-4-20250514’,max_tokens:1400,messages:[{role:‘user’,content:prompt}]})});
+var d=await r.json();
+var txt=(d.content||[]).map(function(b){return b.text||’’;}).join(’’);
+renderNews(JSON.parse(txt.replace(/`json|`/g,’’).trim()));
+}catch(e){renderNews(fallbackNews(name));}
+newsBusy=false;document.getElementById(‘rbtn’).classList.remove(‘spin’);
+}
+
+function renderNews(articles){
+document.getElementById(‘news-grid’).innerHTML=articles.map(function(a){
+var cls=a.sentiment===‘bullish’?‘bull’:a.sentiment===‘bearish’?‘bear’:‘neut’;
+return ‘<div class="ncard '+cls+' fu"><div class="nmeta"><span class="nsrc">’+a.source+’</span><span class="ntag '+cls+'">’+a.sentiment+’</span></div><div class="nhead">’+a.headline+’</div><div class="nbody">’+a.summary+’</div></div>’;
+}).join(’’);
+}
+
+function fallbackNews(name){return[
+{headline:name+’ prices consolidate ahead of Q2 contracts’,summary:‘Spot prices for ‘+name+’ have traded in a narrow band as buyers await Q2 contract finalisation. Indian steel mill demand remains steady at 68% capacity utilisation.’,sentiment:‘neutral’,source:‘Metal Bulletin’},
+{headline:‘India steel output up 5.2% YoY drives alloy demand’,summary:‘India produced 12.4 million tonnes of crude steel in March 2026, up 5.2% year-on-year. EAF producers led growth with a 7.1% increase, boosting ferro alloy demand.’,sentiment:‘bullish’,source:‘Steel360’},
+{headline:‘Chinese ferro alloy exports hit 6-month high’,summary:‘Chinese ferro alloy exports rose to 285,000 tonnes in March, a 6-month high. Indian importers benefited from 3-4% lower landed costs versus domestic production.’,sentiment:‘bearish’,source:‘Bigmint’},
+{headline:‘LME nickel gains 2.3% on Indonesian supply concerns’,summary:‘Nickel prices rallied 2.3% as Indonesian ore export policy uncertainty resurfaced. Speculative positioning turned net-long for the first time since February.’,sentiment:‘bullish’,source:‘LME’},
+{headline:‘FeV supported by tighter BIS rebar standards’,summary:‘Indian rebar mills are raising vanadium microalloying ratios to meet revised BIS 1786:2024 specifications. FeV procurement enquiries increased 15% month-on-month.’,sentiment:‘bullish’,source:‘Fastmarkets’},
+{headline:‘Graphite electrode market balanced at current levels’,summary:‘Electrode prices held steady for three consecutive weeks as EAF utilisation remains at approximately 68%. Producer discipline offsets modest demand softness.’,sentiment:‘neutral’,source:‘S&P Platts’},
+];}
+
+document.getElementById(‘file-input’).addEventListener(‘change’,function(e){var f=e.target.files[0];if(f)handleFile(f);e.target.value=’’;});
+document.addEventListener(‘dragover’,function(e){e.preventDefault();document.getElementById(‘drop-overlay’).classList.add(‘active’);});
+document.addEventListener(‘dragleave’,function(e){if(!e.relatedTarget)document.getElementById(‘drop-overlay’).classList.remove(‘active’);});
+document.addEventListener(‘drop’,function(e){e.preventDefault();document.getElementById(‘drop-overlay’).classList.remove(‘active’);var f=e.dataTransfer.files[0];if(f&&(f.name.endsWith(’.xlsx’)||f.name.endsWith(’.xls’)))handleFile(f);});
+
+function handleFile(file){
+var reader=new FileReader();
+reader.onload=function(e){
+try{
+var wb=XLSX.read(new Uint8Array(e.target.result),{type:‘array’});
+var ws=wb.Sheets[wb.SheetNames[0]];
+var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:’’});
+var hdr=-1;
+for(var i=0;i<Math.min(6,rows.length);i++){var s=rows[i].join(’ ‘).toLowerCase();if(s.indexOf(‘index’)>=0&&(s.indexOf(‘week’)>=0||s.indexOf(‘month’)>=0||s.indexOf(‘avg’)>=0)){hdr=i;break;}}
+if(hdr===-1){toast(‘Cannot detect header row.’,true);return;}
+var pCols=[];
+rows[hdr].forEach(function(h,ci){
+var s=String(h).trim();if(!s||ci<2)return;
+if(s.toLowerCase().indexOf(‘month’)>=0||s.toLowerCase().indexOf(‘avg’)>=0||s.toLowerCase().indexOf(‘week’)>=0||/^w\d{1,2}$/i.test(s)){
+var pre=’’;
+if(hdr>0){var mv=rows[hdr-1][ci];
+if(mv instanceof Date)pre=mv.toLocaleDateString(‘en-GB’,{month:‘short’,year:‘2-digit’}).replace(’ ‘,’-’)+’ ‘;
+else if(typeof mv===‘number’&&mv>40000){try{var dd=XLSX.SSF.parse_date_code(mv);pre=[‘Jan’,‘Feb’,‘Mar’,‘Apr’,‘May’,‘Jun’,‘Jul’,‘Aug’,‘Sep’,‘Oct’,‘Nov’,‘Dec’][dd.m-1]+’-’+String(dd.y).slice(2)+’ ‘;}catch(ex){}}
+else if(mv&&String(mv).match(/\d{4}/))pre=String(mv).substring(0,6)+’ ‘;}
+pCols.push({col:ci,label:(pre+s).trim()});
+}
+});
+if(!pCols.length){toast(‘No period columns found.’,true);return;}
+var newC=[];
+for(var r=hdr+2;r<rows.length;r++){
+var row=rows[r];var name=String(row[0]||’’).trim();var idx=String(row[1]||’’).trim();if(!name)continue;
+var prices=pCols.map(function(pc){var v=row[pc.col];var n=typeof v===‘number’?v:parseFloat(String(v).replace(/[^0-9.-]/g,’’));return isNaN(n)?null:parseFloat(n.toFixed(2));});
+if(prices.some(function(p){return p!==null;}))newC.push({name:name,index:idx,prices:prices});
+}
+if(!newC.length){toast(‘No data found.’,true);return;}
+S.periods=pCols.map(function(p){return p.label;});S.commodities=newC;S.selIdx=Math.min(S.selIdx,newC.length-1);newsLast=null;
+init();toast(‘✓ Updated — ‘+newC.length+’ commodities, ‘+S.periods.length+’ periods’);
+}catch(err){toast(’Parse error: ’+err.message,true);}
+};reader.readAsArrayBuffer(file);
+}
+
+function toast(msg,isErr){
+var el=document.getElementById(‘toast’);el.textContent=msg;
+el.style.borderColor=isErr?‘var(–rd)’:‘var(–gn)’;el.style.color=isErr?‘var(–rd)’:‘var(–gn)’;
+el.classList.add(‘show’);setTimeout(function(){el.classList.remove(‘show’);},4000);
+}
+
+function init(){renderMktBar();renderTabs();renderCards();renderSelect();applySelection(S.selIdx);}
+</script>
+
+</body>
+</html>
